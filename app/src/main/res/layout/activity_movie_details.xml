@@ -1,0 +1,218 @@
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/main"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:fitsSystemWindows="true"
+    android:background="@color/dark_background">
+
+    <!-- AppBarLayout for collapsing toolbar -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fitsSystemWindows="true">
+
+        <!-- CollapsingToolbarLayout to collapse the movie poster -->
+        <com.google.android.material.appbar.CollapsingToolbarLayout
+            android:id="@+id/collapsingToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/posterHeight"
+            android:fitsSystemWindows="true"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed">
+
+            <!-- Movie Poster Image that collapses -->
+            <ImageView
+                android:id="@+id/movie_poster"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="fitCenter"
+                android:fitsSystemWindows="true"
+                app:layout_collapseMode="parallax" />
+
+
+        </com.google.android.material.appbar.CollapsingToolbarLayout>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- The main content (details) in a NestedScrollView for scrolling -->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/nestedScrollView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/dark_background"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Movie Title (below collapsed poster) -->
+            <TextView
+                android:id="@+id/movie_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Movie Title"
+                android:textSize="@dimen/TextSize"
+                android:textStyle="bold"
+                android:paddingBottom="8dp"
+                android:textColor="@android:color/white" />
+
+            <!-- Tagline -->
+            <TextView
+                android:id="@+id/movie_tagline"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/smallerText"
+                android:text="Tagline"
+                android:paddingBottom="4dp"
+                android:textColor="@android:color/darker_gray" />
+
+            <!-- Genres -->
+            <TextView
+                android:id="@+id/movie_genres"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Action, Adventure, Comedy"
+                android:textSize="@dimen/smallerText"
+                android:paddingBottom="8dp"
+                android:textColor="@android:color/white" />
+
+            <!-- Spoken Languages -->
+            <TextView
+                android:id="@+id/movie_languages"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Languages: English"
+                android:textSize="@dimen/smallerText"
+                android:paddingBottom="8dp"
+                android:textColor="@android:color/white" />
+
+            <!-- Release Date -->
+            <TextView
+                android:id="@+id/movie_release_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Release Date: 2016-02-09"
+                android:textSize="@dimen/smallerText"
+                android:paddingBottom="4dp"
+                android:textColor="@android:color/darker_gray" />
+
+            <!-- Runtime -->
+            <TextView
+                android:id="@+id/movie_runtime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Runtime: 108 min"
+                android:textSize="@dimen/smallerText"
+                android:paddingBottom="4dp"
+                android:textColor="@android:color/darker_gray" />
+
+            <!-- Rating -->
+            <TextView
+                android:id="@+id/movie_rating"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Rating: 7.6/10"
+                android:textSize="@dimen/smallerText"
+                android:paddingBottom="4dp"
+                android:textColor="@android:color/holo_orange_light" />
+
+            <!-- Overview (Movie description) -->
+            <TextView
+                android:id="@+id/movie_overview"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="The origin story of former Special Forces operative turned mercenary Wade Wilson..."
+                android:textSize="@dimen/smallText"
+                android:paddingTop="8dp"
+                android:paddingBottom="16dp"
+                android:textColor="@android:color/white" />
+
+            <!-- Budget -->
+            <TextView
+                android:id="@+id/movie_budget"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Budget: $58,000,000"
+                android:textSize="@dimen/smallerText"
+                android:paddingBottom="4dp"
+                android:textColor="@android:color/darker_gray" />
+
+            <!-- Revenue -->
+            <TextView
+                android:id="@+id/movie_revenue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Revenue: $782,837,347"
+                android:textSize="@dimen/smallerText"
+                android:paddingBottom="16dp"
+                android:textColor="@android:color/darker_gray" />
+
+            <!-- Production Companies RecyclerView -->
+            <TextView
+                android:id="@+id/production_companies_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Production Companies"
+                android:textStyle="bold"
+                android:textSize="@dimen/TextSize"
+                android:layout_marginBottom="8dp"
+                android:textColor="@android:color/white" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/production_companies_recycler"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:id="@+id/cast_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Casts"
+                android:textStyle="bold"
+                android:textSize="@dimen/TextSize"
+                android:layout_marginBottom="5dp"
+                android:textColor="@android:color/white" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/cast_recycler"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:id="@+id/watch_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Watch Options in India"
+                android:textStyle="bold"
+                android:textSize="@dimen/TextSize"
+                android:layout_marginBottom="5dp"
+                android:textColor="@android:color/white" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/watch_recycler"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp" />
+
+            <Button
+                android:id="@+id/saveUnsave"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="Save"
+                android:textSize="@dimen/smallText"
+                android:backgroundTint="@android:color/holo_orange_dark"
+                android:textColor="@color/white"/>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

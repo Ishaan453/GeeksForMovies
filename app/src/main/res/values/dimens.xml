@@ -1,0 +1,14 @@
+<resources>
+      <dimen name="fab_margin">16dp</dimen>
+      <dimen name="TextSize">24sp</dimen>
+    <dimen name="searchSize">50dp</dimen>
+    <dimen name="filterSize">15sp</dimen>
+    <dimen name="tmdbSize">250dp</dimen>
+    <dimen name="smallText">17sp</dimen>
+    <dimen name="smallerText">15sp</dimen>
+    <dimen name="searchImageSize">200dp</dimen>
+    <dimen name="prodCompanyLogo">55dp</dimen>
+    <dimen name="castImg">175dp</dimen>
+    <dimen name="watchOptionWidth">275dp</dimen>
+    <dimen name="posterHeight">450dp</dimen>
+</resources>

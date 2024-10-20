@@ -1,0 +1,14 @@
+<resources>
+    <dimen name="fab_margin">28dp</dimen>                <!-- Increased margin (40% more) -->
+    <dimen name="TextSize">38sp</dimen>                  <!-- Increased text size (36% more) -->
+    <dimen name="searchSize">80dp</dimen>                <!-- Increased search size (33% more) -->
+    <dimen name="filterSize">24sp</dimen>                <!-- Increased filter size (33% more) -->
+    <dimen name="tmdbSize">400dp</dimen>                 <!-- Increased TMDB size (33% more) -->
+    <dimen name="smallText">28sp</dimen>                 <!-- Increased small text size (40% more) -->
+    <dimen name="smallerText">24sp</dimen>               <!-- Increased smaller text size (33% more) -->
+    <dimen name="searchImageSize">500dp</dimen>          <!-- Increased search image size (25% more) -->
+    <dimen name="prodCompanyLogo">90dp</dimen>           <!-- Increased logo size (29% more) -->
+    <dimen name="castImg">250dp</dimen>                  <!-- Increased cast image size (25% more) -->
+    <dimen name="watchOptionWidth">400dp</dimen>         <!-- Increased watch option width (33% more) -->
+    <dimen name="posterHeight">1000dp</dimen>            <!-- Increased poster height (25% more) -->
+</resources>
