@@ -9,7 +9,6 @@ import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -18,14 +17,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.bumptech.glide.Glide;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.ads.admanager.AdManagerAdView;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.ishaanbhela.geeksformovies.Database.SqLiteHelper;
 import com.ishaanbhela.geeksformovies.cast.castAdapter;
@@ -39,10 +33,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class movieDetails extends AppCompatActivity {
 
@@ -63,8 +56,6 @@ public class movieDetails extends AppCompatActivity {
     private Double rating;
 
     String url = "https://2f2vjaxr6x6uqpdvqmwpmwch6a0pzera.lambda-url.ap-south-1.on.aws/";
-
-    AdManagerAdView adView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,12 +112,6 @@ public class movieDetails extends AppCompatActivity {
         if(dbHelper.isMovieSaved(movieId)){
             saveUnsave.setText("Delete from Saved Movies");
         }
-
-
-        MobileAds.initialize(this, initializationStatus -> {});
-        adView = findViewById(R.id.largeBanner);
-        AdRequest adRequest = new AdRequest.Builder().build();
-        adView.loadAd(adRequest);
 
         saveUnsave.setOnClickListener(v -> {
             if (saveUnsave.getText().equals("Save")) {
@@ -212,6 +197,9 @@ public class movieDetails extends AppCompatActivity {
     private void getMovieDetails(int movieId) throws JSONException {
         RequestQueue queue = Volley.newRequestQueue(this);
 
+        NumberFormat format = NumberFormat.getInstance();
+        format.setMaximumFractionDigits(2);
+
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("type", "movieDetails");
         jsonObject.put("movieId", ""+movieId);
@@ -230,10 +218,10 @@ public class movieDetails extends AppCompatActivity {
                         movieReleaseDate.setText(releaseDate);
 
                         runtime = response.getInt("runtime");
-                        movieRuntime.setText("Runtime: " + runtime + " min");
+                        movieRuntime.setText("Runtime: " + format.format(runtime) + " min");
 
                         rating = response.getDouble("vote_average");
-                        movieRating.setText("Rating: " + rating + "/10");
+                        movieRating.setText("Rating: " + format.format(rating) + "/10");
 
                         overview = response.getString("overview");
                         movieOverview.setText(overview);
@@ -247,11 +235,21 @@ public class movieDetails extends AppCompatActivity {
                                         .into(moviePoster);
 
                         // Budget and Revenue
-                        budget = response.getLong("budget");
-                        movieBudget.setText("Budget: $" + budget);
+                        if(budget != 0){
+                            budget = response.getLong("budget");
+                            movieBudget.setText("Budget: $" + format.format(budget));
+                        }
+                        else{
+                            movieBudget.setText("Budget: NA");
+                        }
 
-                        revenue = response.getLong("revenue");
-                        movieRevenue.setText("Revenue: $" + revenue);
+                        if(revenue != 0) {
+                            revenue = response.getLong("revenue");
+                            movieRevenue.setText("Revenue: $" + format.format(revenue));
+                        }
+                        else{
+                            movieBudget.setText("Revenue: NA");
+                        }
 
                         // Genres
                         JSONArray genresArray = response.getJSONArray("genres");

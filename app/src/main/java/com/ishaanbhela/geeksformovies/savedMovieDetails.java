@@ -17,9 +17,6 @@ import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.bumptech.glide.Glide;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.ads.admanager.AdManagerAdView;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.ishaanbhela.geeksformovies.Database.SqLiteHelper;
 import com.ishaanbhela.geeksformovies.cast.castAdapter;
@@ -33,6 +30,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,12 +47,11 @@ public class savedMovieDetails extends AppCompatActivity {
     private CollapsingToolbarLayout collapsingToolbarLayout;
 
     private int movieId;
-    AdManagerAdView adView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_movie_details); // Use the same XML layout
+        setContentView(R.layout.activity_movie_details);
 
         // Initialize UI elements
         movieTitle = findViewById(R.id.movie_title);
@@ -96,11 +93,6 @@ public class savedMovieDetails extends AppCompatActivity {
             throw new RuntimeException(e);
         }
 
-        MobileAds.initialize(this, initializationStatus -> {});
-        adView = findViewById(R.id.largeBanner);
-        AdRequest adRequest = new AdRequest.Builder().build();
-        adView.loadAd(adRequest);
-
         deleteMovie.setOnClickListener(v -> {
             new SqLiteHelper(this).deleteMovie(movieId);
             finish();
@@ -110,6 +102,9 @@ public class savedMovieDetails extends AppCompatActivity {
     private void loadMovieDetails(int movieId) {
         SqLiteHelper dbHelper = new SqLiteHelper(this);
         Cursor cursor = dbHelper.getMovieDetails(movieId);
+
+        NumberFormat format = NumberFormat.getInstance();
+        format.setMaximumFractionDigits(2);
 
         if (cursor != null && cursor.moveToFirst()) {
             // Check and get column indices
@@ -158,12 +153,12 @@ public class savedMovieDetails extends AppCompatActivity {
 
             if (budgetIndex != -1) {
                 long budget = cursor.getLong(budgetIndex);
-                movieBudget.setText("Budget: $" + budget);
+                movieBudget.setText("Budget: $" + format.format(budget));
             }
 
             if (revenueIndex != -1) {
                 long revenue = cursor.getLong(revenueIndex);
-                movieRevenue.setText("Revenue: $" + revenue);
+                movieRevenue.setText("Revenue: $" + format.format(revenue));
             }
 
             if (posterPathIndex != -1) {

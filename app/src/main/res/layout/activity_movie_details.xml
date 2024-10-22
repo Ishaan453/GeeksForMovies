@@ -195,6 +195,15 @@
                 android:layout_marginBottom="5dp"
                 android:textColor="@android:color/white" />
 
+            <TextView
+                android:id="@+id/attributeJustWatch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Powered by JustWatch"
+                android:textSize="@dimen/smallerText"
+                android:layout_marginBottom="5dp"
+                android:textColor="@android:color/white" />
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/watch_recycler"
                 android:layout_width="match_parent"

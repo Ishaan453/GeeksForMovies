@@ -105,6 +105,32 @@
             app:backgroundTint="@null" />
 
         <TextView
+            android:id="@+id/topRated_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/filter_button_background"
+            android:text="Top Rated"
+            android:textSize="@dimen/filterSize"
+            android:layout_margin="2dp"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="2dp"
+            android:textColor="@color/white"
+            app:backgroundTint="@null" />
+
+        <TextView
+            android:id="@+id/upcoming_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/filter_button_background"
+            android:text="Upcoming"
+            android:textSize="@dimen/filterSize"
+            android:layout_margin="2dp"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="2dp"
+            android:textColor="@color/white"
+            app:backgroundTint="@null" />
+
+        <TextView
             android:id="@+id/saved_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -125,7 +151,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginHorizontal="30dp"
-        app:layout_constraintBottom_toTopOf="@id/bannerAd"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/buttonContainer"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" >

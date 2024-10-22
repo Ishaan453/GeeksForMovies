@@ -1,7 +1,7 @@
 <resources>
       <dimen name="fab_margin">16dp</dimen>
-      <dimen name="TextSize">24sp</dimen>
-    <dimen name="searchSize">50dp</dimen>
+      <dimen name="TextSize">21sp</dimen>
+    <dimen name="searchSize">46dp</dimen>
     <dimen name="filterSize">15sp</dimen>
     <dimen name="tmdbSize">250dp</dimen>
     <dimen name="smallText">17sp</dimen>

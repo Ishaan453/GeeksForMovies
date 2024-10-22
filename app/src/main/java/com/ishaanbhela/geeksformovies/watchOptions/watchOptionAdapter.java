@@ -33,8 +33,8 @@ public class watchOptionAdapter extends RecyclerView.Adapter<watchOptionAdapter.
     @Override
     public void onBindViewHolder(@NonNull watchOptionViewHolder holder, int position) {
         if(watchOptions.isEmpty()){
-            holder.providerLogo.setImageDrawable(ContextCompat.getDrawable(holder.itemView.getContext(), R.drawable.baseline_error_24));
-            holder.providerName.setText("Data Unavailable :(");
+            holder.providerLogo.setVisibility(View.GONE);
+            holder.providerName.setText("No providers Available :(");
             return;
         }
         watchOptionsModel watchOption = watchOptions.get(position);

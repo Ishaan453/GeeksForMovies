@@ -21,10 +21,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
-import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.ads.admanager.AdManagerAdView;
 import com.ishaanbhela.geeksformovies.Database.SqLiteHelper;
 import com.ishaanbhela.geeksformovies.searchedMovies.searchedMoviesAdapter;
 import com.ishaanbhela.geeksformovies.searchedMovies.searchedMoviesModel;
@@ -33,9 +29,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -43,12 +37,11 @@ public class MainActivity extends AppCompatActivity {
     private searchedMoviesAdapter movieAdapter;
     private List<searchedMoviesModel> trendingMovieList;
     private List<searchedMoviesModel> popularMovieList;
-    private List<searchedMoviesModel> savedMovieList;
     private List<searchedMoviesModel> searchedMovieList;
-    private TextView searched, trending, popular, saved;
+    private List<searchedMoviesModel> topRatedMovieList, upcomingMovieList;
+    private TextView searched, trending, popular, saved, topRated, upcoming;
     private ImageView searchIcon;
     private EditText searchEditText;
-    AdManagerAdView adView;
     String url = "https://2f2vjaxr6x6uqpdvqmwpmwch6a0pzera.lambda-url.ap-south-1.on.aws/";
 
 
@@ -68,13 +61,16 @@ public class MainActivity extends AppCompatActivity {
         trending = findViewById(R.id.trending_button);
         popular = findViewById(R.id.popular_button);
         saved = findViewById(R.id.saved_button);
+        topRated = findViewById(R.id.topRated_button);
+        upcoming = findViewById(R.id.upcoming_button);
         searchIcon = findViewById(R.id.searchIcon);
         searchEditText = findViewById(R.id.editText);
 
         popularMovieList = new ArrayList<>();
-        savedMovieList = new ArrayList<>();
         searchedMovieList = new ArrayList<>();
         trendingMovieList = new ArrayList<>();
+        topRatedMovieList = new ArrayList<>();
+        upcomingMovieList = new ArrayList<>();
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         try {
@@ -82,12 +78,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
-
-        MobileAds.initialize(this, initializationStatus -> {});
-        adView = findViewById(R.id.bannerAd);
-        AdRequest adRequest = new AdRequest.Builder().build();
-        adView.loadAd(adRequest);
-
         
         searched.setOnClickListener(v -> {
             try {
@@ -117,6 +107,25 @@ public class MainActivity extends AppCompatActivity {
             loadSaved();
         });
 
+
+        topRated.setOnClickListener(v -> {
+            try{
+                loadTopRated();
+            }
+            catch (JSONException e){
+                throw new RuntimeException(e);
+            }
+        });
+
+        upcoming.setOnClickListener(v -> {
+            try{
+                loadUpcoming();
+            }
+            catch (JSONException e){
+                throw new RuntimeException(e);
+            }
+        });
+
         searchIcon.setOnClickListener(v -> {
             try {
                 loadSearched(searchEditText.getText().toString());
@@ -127,11 +136,90 @@ public class MainActivity extends AppCompatActivity {
         
     }
 
+    private void loadUpcoming() throws JSONException{
+        saved.setSelected(false);
+        popular.setSelected(false);
+        searched.setSelected(false);
+        trending.setSelected(false);
+        topRated.setSelected(false);
+        upcoming.setSelected(true);
+
+        if(!upcomingMovieList.isEmpty()){
+            movieAdapter = new searchedMoviesAdapter(upcomingMovieList, this);
+            recyclerView.setAdapter(movieAdapter);
+            return;
+        }
+
+        JSONObject jsonRequest = new JSONObject();
+        jsonRequest.put("type", "upcoming");
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                Request.Method.POST,
+                url,
+                jsonRequest,
+                response -> {
+                    try {
+                        System.out.println("GOT RESPONSE UPCOMING");
+                        JSONArray results = response.getJSONArray("results");
+                        addMovie(results, upcomingMovieList);
+                        movieAdapter = new searchedMoviesAdapter(upcomingMovieList, this);
+                        recyclerView.setAdapter(movieAdapter);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                        Log.e("MovieFetcher", "JSON parsing error: " + e.getMessage());
+                    }
+                },
+                error -> Log.e("MovieFetcher", "Error: " + error.getMessage())
+        );
+        Volley.newRequestQueue(this).add(jsonObjectRequest);
+    }
+
+    private void loadTopRated() throws JSONException{
+        saved.setSelected(false);
+        popular.setSelected(false);
+        searched.setSelected(false);
+        trending.setSelected(false);
+        topRated.setSelected(true);
+        upcoming.setSelected(false);
+
+        if(!topRatedMovieList.isEmpty()){
+            movieAdapter = new searchedMoviesAdapter(topRatedMovieList, this);
+            recyclerView.setAdapter(movieAdapter);
+            return;
+        }
+
+        JSONObject jsonRequest = new JSONObject();
+        jsonRequest.put("type", "topRated");
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                Request.Method.POST,
+                url,
+                jsonRequest,
+                response -> {
+                    try {
+                        System.out.println("GOT RESPONSE TOP RATED");
+                        JSONArray results = response.getJSONArray("results");
+                        addMovie(results, topRatedMovieList);
+                        movieAdapter = new searchedMoviesAdapter(topRatedMovieList, this);
+                        recyclerView.setAdapter(movieAdapter);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                        Log.e("MovieFetcher", "JSON parsing error: " + e.getMessage());
+                    }
+                },
+                error -> Log.e("MovieFetcher", "Error: " + error.getMessage())
+        );
+
+        Volley.newRequestQueue(this).add(jsonObjectRequest);
+    }
+
     private void loadSaved() {
         saved.setSelected(true);
         popular.setSelected(false);
         searched.setSelected(false);
         trending.setSelected(false);
+        topRated.setSelected(false);
+        upcoming.setSelected(false);
 
         SqLiteHelper dbHelper = new SqLiteHelper(this);  // Initialize the SQLite helper
         List<searchedMoviesModel> savedMoviesList = new ArrayList<>();
@@ -180,6 +268,8 @@ public class MainActivity extends AppCompatActivity {
         popular.setSelected(true);
         searched.setSelected(false);
         trending.setSelected(false);
+        topRated.setSelected(false);
+        upcoming.setSelected(false);
 
         if(!popularMovieList.isEmpty()){
             movieAdapter = new searchedMoviesAdapter(popularMovieList, this);
@@ -218,6 +308,8 @@ public class MainActivity extends AppCompatActivity {
         popular.setSelected(false);
         searched.setSelected(true);
         trending.setSelected(false);
+        topRated.setSelected(false);
+        upcoming.setSelected(false);
 
         if(search.equals("") || search.isEmpty()){
             Toast.makeText(this, "No search value provided", Toast.LENGTH_SHORT).show();
@@ -268,6 +360,8 @@ public class MainActivity extends AppCompatActivity {
         popular.setSelected(false);
         searched.setSelected(false);
         trending.setSelected(true);
+        topRated.setSelected(false);
+        upcoming.setSelected(false);
         
         if(!trendingMovieList.isEmpty()){
             movieAdapter = new searchedMoviesAdapter(trendingMovieList, this);

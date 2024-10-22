@@ -12,8 +12,8 @@ android {
         applicationId = "com.ishaanbhela.geeksformovies"
         minSdk = 26
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.0001"
+        versionCode = 3
+        versionName = "1.10"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -52,7 +52,6 @@ dependencies {
     implementation("com.android.volley:volley:1.2.1")
     implementation("com.google.android.material:material:1.9.0")
     implementation("com.google.android.flexbox:flexbox:3.0.0")
-    implementation("com.google.android.gms:play-services-ads:23.3.0")
     implementation(libs.navigation.fragment)
     implementation(libs.navigation.ui)
     testImplementation(libs.junit)

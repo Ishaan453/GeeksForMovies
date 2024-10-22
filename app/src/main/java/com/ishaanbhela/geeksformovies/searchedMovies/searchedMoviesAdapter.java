@@ -19,6 +19,7 @@ import com.ishaanbhela.geeksformovies.R;
 import com.ishaanbhela.geeksformovies.movieDetails;
 import com.ishaanbhela.geeksformovies.savedMovieDetails;
 
+import java.text.NumberFormat;
 import java.util.List;
 
 public class searchedMoviesAdapter extends RecyclerView.Adapter<searchedMoviesAdapter.searchedMoviesHolder> {
@@ -41,10 +42,13 @@ public class searchedMoviesAdapter extends RecyclerView.Adapter<searchedMoviesAd
 
     @Override
     public void onBindViewHolder(@NonNull searchedMoviesHolder holder, int position) {
+        NumberFormat format = NumberFormat.getInstance();
+        format.setMaximumFractionDigits(2);
+
         searchedMoviesModel movie = movieList.get(position);
         holder.title.setText(movie.getTitle());
         holder.release.setText("Release Date: " + movie.getReleaseDate());
-        holder.rating.setText("Rating: " + movie.getVoteAverage());
+        holder.rating.setText("Rating: " + format.format(movie.getVoteAverage()));
         holder.overview.setText(movie.getOverview());
 
         String posterUrl = "https://image.tmdb.org/t/p/w500" + movie.getPosterPath(); // TMDb URL for posters

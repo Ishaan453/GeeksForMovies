@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -32,22 +33,35 @@ public class productionCompanyAdapter extends RecyclerView.Adapter<productionCom
 
     @Override
     public void onBindViewHolder(@NonNull productionCompanyHolder holder, int position) {
-        String url = "https://image.tmdb.org/t/p/w500" + companies.get(position).logo_path;
+        if(companies.isEmpty()){
+            holder.logo.setImageDrawable(context.getDrawable(R.drawable.baseline_error_24));
+            holder.name = "No Data Available";
+        }
+        else{
+            String url = "https://image.tmdb.org/t/p/w500" + companies.get(position).logo_path;
+            Glide.with(context)
+                    .load(url)
+                    .placeholder(R.drawable.placeholder) // Placeholder image while loading
+                    .error(R.drawable.placeholder)
+                    .into(holder.logo);
 
-        Glide.with(context)
-                .load(url)
-                .placeholder(R.drawable.placeholder) // Placeholder image while loading
-                .error(R.drawable.placeholder)
-                .into(holder.logo);
+            holder.name = companies.get(position).name;
+        }
+
+        holder.itemView.setOnClickListener(v -> {
+            Toast.makeText(context, holder.name, Toast.LENGTH_SHORT).show();
+        });
+
     }
 
     @Override
     public int getItemCount() {
-        return companies.size();
+        return companies.isEmpty()? 1: companies.size();
     }
 
     public class productionCompanyHolder extends RecyclerView.ViewHolder{
         ImageView logo;
+        String name;
         public productionCompanyHolder(@NonNull View itemView) {
             super(itemView);
             logo = itemView.findViewById(R.id.productionLogo);
