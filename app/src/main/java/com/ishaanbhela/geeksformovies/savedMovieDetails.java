@@ -1,12 +1,17 @@
 package com.ishaanbhela.geeksformovies;
 
+import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -44,7 +49,9 @@ public class savedMovieDetails extends AppCompatActivity {
     private List<watchOptionsModel> watchOptionList;
     private productionCompanyAdapter productionCompaniesAdapter;
     private Button deleteMovie;
+    private Button playTrailer;
     private CollapsingToolbarLayout collapsingToolbarLayout;
+    private String url = "https://2f2vjaxr6x6uqpdvqmwpmwch6a0pzera.lambda-url.ap-south-1.on.aws/", trailerURL;
 
     private int movieId;
 
@@ -69,6 +76,7 @@ public class savedMovieDetails extends AppCompatActivity {
         castRecyclerView = findViewById(R.id.cast_recycler);
         watchOptionsRecyclerView = findViewById(R.id.watch_recycler);
         collapsingToolbarLayout = findViewById(R.id.collapsingToolbar);
+        playTrailer = findViewById(R.id.play_trailer_button);
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
@@ -92,6 +100,30 @@ public class savedMovieDetails extends AppCompatActivity {
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
+
+        try {
+            getTrailerURL(movieId, new movieDetails.TrailerCallback() {
+                @Override
+                public void onSuccess(String result) {
+                    trailerURL = result;
+                    if(!trailerURL.equals("NA")){
+                        playTrailer.setVisibility(View.VISIBLE);
+                    }
+
+                }
+
+                @Override
+                public void onError(String error) {
+                    Toast.makeText(savedMovieDetails.this, "SOME ERROR OCCURED", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } catch (JSONException e) {
+            Toast.makeText(savedMovieDetails.this, "SOME ERROR OCCURED", Toast.LENGTH_SHORT).show();
+        }
+
+        playTrailer.setOnClickListener(v -> {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(trailerURL)));
+        });
 
         deleteMovie.setOnClickListener(v -> {
             new SqLiteHelper(this).deleteMovie(movieId);
@@ -205,7 +237,7 @@ public class savedMovieDetails extends AppCompatActivity {
         jsonObject.put("type", "watchOptions");
         jsonObject.put("movieId", ""+movieId);
 
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, "https://2f2vjaxr6x6uqpdvqmwpmwch6a0pzera.lambda-url.ap-south-1.on.aws/", jsonObject, response -> {
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url, jsonObject, response -> {
             try{
                 System.out.println(response.toString());
                 if (response.has("flatrate")) {
@@ -262,5 +294,34 @@ public class savedMovieDetails extends AppCompatActivity {
         });
 
         queue.add(jsonObjectRequest);
+    }
+
+    public interface TrailerCallback {
+        void onSuccess(String result);
+        void onError(String error);
+    }
+
+    private void getTrailerURL(int movieId, final movieDetails.TrailerCallback callback) throws JSONException{
+        JSONObject jsonRequest = new JSONObject();
+        jsonRequest.put("type", "trailer");
+        jsonRequest.put("movieId", ""+movieId);
+
+        System.out.println(jsonRequest);
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                Request.Method.POST,
+                url,
+                jsonRequest,
+                response -> {
+                    try {
+                        System.out.println("GOT RESPONSE TRAILER");
+                        System.out.println(response);
+                        callback.onSuccess(response.getString("trailerURL"));
+                    } catch (JSONException e) {
+                        callback.onError("ERROR" + e);
+                    }
+                },
+                error -> Log.e("MovieFetcher", "Error WHILE FETCHING: " + error.getMessage() + error)
+        );
+        Volley.newRequestQueue(this).add(jsonObjectRequest);
     }
 }

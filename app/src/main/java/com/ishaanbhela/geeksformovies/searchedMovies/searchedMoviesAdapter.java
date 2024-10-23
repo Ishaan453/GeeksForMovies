@@ -43,7 +43,7 @@ public class searchedMoviesAdapter extends RecyclerView.Adapter<searchedMoviesAd
     @Override
     public void onBindViewHolder(@NonNull searchedMoviesHolder holder, int position) {
         NumberFormat format = NumberFormat.getInstance();
-        format.setMaximumFractionDigits(2);
+        format.setMaximumFractionDigits(1);
 
         searchedMoviesModel movie = movieList.get(position);
         holder.title.setText(movie.getTitle());

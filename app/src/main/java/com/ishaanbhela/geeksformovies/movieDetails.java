@@ -1,11 +1,16 @@
 package com.ishaanbhela.geeksformovies;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -36,11 +41,13 @@ import org.json.JSONObject;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class movieDetails extends AppCompatActivity {
 
     private TextView movieTitle, movieTagline, movieGenres, movieReleaseDate, movieRuntime, movieRating, movieOverview, movieBudget, movieRevenue, movieLanguages;
     private ImageView moviePoster;
+    private Button playTrailer;
     private RecyclerView productionCompaniesRecyclerView, castsRecyclerView, watchOptionsRecyclerView;
     private List<productionCompanyModel> productionCompanyList;
     private List<castModel> casts;
@@ -50,7 +57,7 @@ public class movieDetails extends AppCompatActivity {
     private CollapsingToolbarLayout collapsingToolbarLayout;
 
     private int movieId;
-    private String title, posterPath, tagline, releaseDate, overview, genres, languages;
+    private String title, posterPath, tagline, releaseDate, overview, genres, languages, trailerURL;
     private int runtime;
     private long budget, revenue;
     private Double rating;
@@ -79,6 +86,7 @@ public class movieDetails extends AppCompatActivity {
         movieRevenue = findViewById(R.id.movie_revenue);
         movieLanguages = findViewById(R.id.movie_languages);
         moviePoster = findViewById(R.id.movie_poster);
+        playTrailer = findViewById(R.id.play_trailer_button);
         productionCompaniesRecyclerView = findViewById(R.id.production_companies_recycler);
         saveUnsave = findViewById(R.id.saveUnsave);
         castsRecyclerView = findViewById(R.id.cast_recycler);
@@ -113,6 +121,26 @@ public class movieDetails extends AppCompatActivity {
             saveUnsave.setText("Delete from Saved Movies");
         }
 
+        try {
+            getTrailerURL(movieId, new TrailerCallback() {
+                @Override
+                public void onSuccess(String result) {
+                    trailerURL = result;
+                    if(!trailerURL.equals("NA")){
+                        playTrailer.setVisibility(View.VISIBLE);
+                    }
+
+                }
+
+                @Override
+                public void onError(String error) {
+                    Toast.makeText(movieDetails.this, "SOME ERROR OCCURED", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } catch (JSONException e) {
+            Toast.makeText(movieDetails.this, "SOME ERROR OCCURED", Toast.LENGTH_SHORT).show();
+        }
+
         saveUnsave.setOnClickListener(v -> {
             if (saveUnsave.getText().equals("Save")) {
                 // Save movie and production companies to the database
@@ -125,7 +153,41 @@ public class movieDetails extends AppCompatActivity {
                 saveUnsave.setText("Save");
             }
         });
+
+        playTrailer.setOnClickListener(v -> {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(trailerURL)));
+        });
     }
+
+    public interface TrailerCallback {
+        void onSuccess(String result);
+        void onError(String error);
+    }
+
+    private void getTrailerURL(int movieId, final TrailerCallback callback) throws JSONException{
+        JSONObject jsonRequest = new JSONObject();
+        jsonRequest.put("type", "trailer");
+        jsonRequest.put("movieId", ""+movieId);
+
+        System.out.println(jsonRequest);
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                Request.Method.POST,
+                url,
+                jsonRequest,
+                response -> {
+                    try {
+                        System.out.println("GOT RESPONSE TRAILER");
+                        System.out.println(response);
+                        callback.onSuccess(response.getString("trailerURL"));
+                    } catch (JSONException e) {
+                        callback.onError("ERROR" + e);
+                    }
+                },
+                error -> Log.e("MovieFetcher", "Error WHILE FETCHING: " + error.getMessage() + error)
+        );
+        Volley.newRequestQueue(this).add(jsonObjectRequest);
+    }
+
 
     private void getWatchOptions(int movieId) throws JSONException {
         RequestQueue queue = Volley.newRequestQueue(this);
@@ -232,11 +294,12 @@ public class movieDetails extends AppCompatActivity {
                         Glide.with(movieDetails.this).load("https://image.tmdb.org/t/p/w500" + posterPath)
                                 .error(R.drawable.placeholder)
                                 .placeholder(R.drawable.placeholder)
-                                        .into(moviePoster);
+                                .into(moviePoster);
 
                         // Budget and Revenue
+                        budget = response.getLong("budget");
+                        revenue = response.getLong("revenue");
                         if(budget != 0){
-                            budget = response.getLong("budget");
                             movieBudget.setText("Budget: $" + format.format(budget));
                         }
                         else{
@@ -244,11 +307,10 @@ public class movieDetails extends AppCompatActivity {
                         }
 
                         if(revenue != 0) {
-                            revenue = response.getLong("revenue");
                             movieRevenue.setText("Revenue: $" + format.format(revenue));
                         }
                         else{
-                            movieBudget.setText("Revenue: NA");
+                            movieRevenue.setText("Revenue: NA");
                         }
 
                         // Genres
