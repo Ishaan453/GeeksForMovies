@@ -20,6 +20,7 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/searchImageSize"
             android:src="@drawable/placeholder"
+            android:foreground="@drawable/gradient_overlay"
             android:scaleType="fitCenter"
             android:contentDescription="Movie Poster" />
 
@@ -62,7 +63,7 @@
                 android:layout_height="wrap_content"
                 android:text="Rating"
                 android:textSize="@dimen/smallText"
-                android:textColor="@android:color/holo_orange_light" />
+                android:textColor="@color/highlight_yellow" />
         </LinearLayout>
 
         <!-- Overview Section with Background Color -->

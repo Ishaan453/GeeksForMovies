@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView searched, trending, popular, saved, topRated, upcoming;
     private ImageView searchIcon;
     private EditText searchEditText;
-    String url = "https://2f2vjaxr6x6uqpdvqmwpmwch6a0pzera.lambda-url.ap-south-1.on.aws/";
+    String url = MyApp.url;
 
 
     @Override
@@ -136,20 +136,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        searchEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_ACTION_SEARCH || (event != null && event.getAction() == KeyEvent.ACTION_DOWN && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)){
-                    try {
-                        loadSearched(searchEditText.getText().toString());
-                        return true;
-                    } catch (JSONException e) {
-                        throw new RuntimeException(e);
-                    }
+        searchEditText.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH || (event != null && event.getAction() == KeyEvent.ACTION_DOWN && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)){
+                try {
+                    loadSearched(searchEditText.getText().toString());
+                    return true;
+                } catch (JSONException e) {
+                    throw new RuntimeException(e);
                 }
-
-                return false;
             }
+
+            return false;
         });
         
     }

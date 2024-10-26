@@ -26,6 +26,7 @@ import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.ishaanbhela.geeksformovies.Database.SqLiteHelper;
 import com.ishaanbhela.geeksformovies.cast.castAdapter;
 import com.ishaanbhela.geeksformovies.cast.castModel;
+import com.ishaanbhela.geeksformovies.commonClasses.movieDetailsCommon;
 import com.ishaanbhela.geeksformovies.productionCompany.productionCompanyAdapter;
 import com.ishaanbhela.geeksformovies.productionCompany.productionCompanyModel;
 import com.ishaanbhela.geeksformovies.watchOptions.watchOptionAdapter;
@@ -51,7 +52,7 @@ public class savedMovieDetails extends AppCompatActivity {
     private Button deleteMovie;
     private Button playTrailer;
     private CollapsingToolbarLayout collapsingToolbarLayout;
-    private String url = "https://2f2vjaxr6x6uqpdvqmwpmwch6a0pzera.lambda-url.ap-south-1.on.aws/", trailerURL;
+    private String url = MyApp.url, trailerURL;
 
     private int movieId;
 
@@ -91,34 +92,51 @@ public class savedMovieDetails extends AppCompatActivity {
 
         productionCompanyList = new ArrayList<>();
         watchOptionList = new ArrayList<>();
+        
+        movieDetailsCommon common = new movieDetailsCommon();
 
         // Get movie ID from intent
         movieId = getIntent().getIntExtra("MOVIE_ID", -1);
         loadMovieDetails(movieId);
         try {
-            getWatchOptions(movieId);
+            common.fetchWatchOptions(this, movieId, new movieDetailsCommon.watchOptionsCallback() {
+                @Override
+                public void onSuccess(JSONObject response) throws JSONException {
+                    common.populateWatchOptionsSuccess(response, watchOptionList);
+                    watchOptionsRecyclerView.setLayoutManager(new LinearLayoutManager(savedMovieDetails.this, LinearLayoutManager.HORIZONTAL, false));
+                    watchOptionAdapter watchAdapter = new watchOptionAdapter(watchOptionList);
+                    watchOptionsRecyclerView.setAdapter(watchAdapter);
+                }
+
+                @Override
+                public void onError(String error) {
+                    watchOptionsRecyclerView.setLayoutManager(new LinearLayoutManager(savedMovieDetails.this, LinearLayoutManager.HORIZONTAL, false));
+                    watchOptionAdapter watchAdapter = new watchOptionAdapter(watchOptionList);
+                    watchOptionsRecyclerView.setAdapter(watchAdapter);
+                }
+            });
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
 
         try {
-            getTrailerURL(movieId, new movieDetails.TrailerCallback() {
+            common.fetchTrailerURL(this, movieId, new movieDetailsCommon.TrailerCallback() {
                 @Override
                 public void onSuccess(String result) {
                     trailerURL = result;
                     if(!trailerURL.equals("NA")){
                         playTrailer.setVisibility(View.VISIBLE);
                     }
-
                 }
 
                 @Override
                 public void onError(String error) {
-                    Toast.makeText(savedMovieDetails.this, "SOME ERROR OCCURED", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(savedMovieDetails.this, "SOME ERROR OCCURRED", Toast.LENGTH_SHORT).show();
                 }
             });
+
         } catch (JSONException e) {
-            Toast.makeText(savedMovieDetails.this, "SOME ERROR OCCURED", Toast.LENGTH_SHORT).show();
+            Toast.makeText(savedMovieDetails.this, "SOME ERROR OCCURRED", Toast.LENGTH_SHORT).show();
         }
 
         playTrailer.setOnClickListener(v -> {
@@ -227,101 +245,5 @@ public class savedMovieDetails extends AppCompatActivity {
             // Handle the case when the movie is not found
             movieTitle.setText("Movie not found");
         }
-    }
-
-
-    private void getWatchOptions(int movieId) throws JSONException {
-        RequestQueue queue = Volley.newRequestQueue(this);
-
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("type", "watchOptions");
-        jsonObject.put("movieId", ""+movieId);
-
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url, jsonObject, response -> {
-            try{
-                System.out.println(response.toString());
-                if (response.has("flatrate")) {
-                    JSONArray flatRateArray = response.getJSONArray("flatrate");
-                    for (int i = 0; i < flatRateArray.length(); i++) {
-                        JSONObject providerJson = flatRateArray.getJSONObject(i);
-                        watchOptionsModel provider = new watchOptionsModel(
-                                providerJson.getString("logo_path"),
-                                providerJson.getString("provider_name"),
-                                "Subscription"
-                        );
-                        watchOptionList.add(provider);
-                    }
-                }
-
-                if (response.has("rent")) {
-                    JSONArray rentArray = response.getJSONArray("rent");
-                    for (int i = 0; i < rentArray.length(); i++) {
-                        JSONObject providerJson = rentArray.getJSONObject(i);
-                        watchOptionsModel provider = new watchOptionsModel(
-                                providerJson.getString("logo_path"),
-                                providerJson.getString("provider_name"),
-                                "Rent"
-                        );
-                        watchOptionList.add(provider);
-                    }
-                }
-
-                if (response.has("buy")) {
-                    JSONArray rentArray = response.getJSONArray("buy");
-                    for (int i = 0; i < rentArray.length(); i++) {
-                        JSONObject providerJson = rentArray.getJSONObject(i);
-                        watchOptionsModel provider = new watchOptionsModel(
-                                providerJson.getString("logo_path"),
-                                providerJson.getString("provider_name"),
-                                "Buy"
-                        );
-                        watchOptionList.add(provider);
-                    }
-                }
-
-                watchOptionsRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-                watchOptionAdapter watchAdapter = new watchOptionAdapter(watchOptionList);
-                watchOptionsRecyclerView.setAdapter(watchAdapter);
-
-
-            } catch (Exception e){
-                System.out.println("ERRORR");
-            }
-        }, error -> {
-            watchOptionsRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-            watchOptionAdapter watchAdapter = new watchOptionAdapter(watchOptionList);
-            watchOptionsRecyclerView.setAdapter(watchAdapter);
-        });
-
-        queue.add(jsonObjectRequest);
-    }
-
-    public interface TrailerCallback {
-        void onSuccess(String result);
-        void onError(String error);
-    }
-
-    private void getTrailerURL(int movieId, final movieDetails.TrailerCallback callback) throws JSONException{
-        JSONObject jsonRequest = new JSONObject();
-        jsonRequest.put("type", "trailer");
-        jsonRequest.put("movieId", ""+movieId);
-
-        System.out.println(jsonRequest);
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
-                Request.Method.POST,
-                url,
-                jsonRequest,
-                response -> {
-                    try {
-                        System.out.println("GOT RESPONSE TRAILER");
-                        System.out.println(response);
-                        callback.onSuccess(response.getString("trailerURL"));
-                    } catch (JSONException e) {
-                        callback.onError("ERROR" + e);
-                    }
-                },
-                error -> Log.e("MovieFetcher", "Error WHILE FETCHING: " + error.getMessage() + error)
-        );
-        Volley.newRequestQueue(this).add(jsonObjectRequest);
     }
 }
