@@ -4,10 +4,12 @@ import static androidx.core.content.ContextCompat.startActivity;
 
 import android.content.Context;
 import android.content.Intent;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -27,10 +29,12 @@ public class searchedMoviesAdapter extends RecyclerView.Adapter<searchedMoviesAd
     private Context context;
     private List<searchedMoviesModel> movieList;
     private SqLiteHelper dbHelper;
+    private int width;
 
-    public searchedMoviesAdapter(List<searchedMoviesModel> movies, Context context){
+    public searchedMoviesAdapter(List<searchedMoviesModel> movies, Context context, int width){
         movieList = movies;
         this.context = context;
+        this.width = width;
     }
 
     @NonNull
@@ -42,6 +46,11 @@ public class searchedMoviesAdapter extends RecyclerView.Adapter<searchedMoviesAd
 
     @Override
     public void onBindViewHolder(@NonNull searchedMoviesHolder holder, int position) {
+        if(width != 0){
+            ViewGroup.LayoutParams params = holder.card.getLayoutParams();
+            params.width = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, width, context.getResources().getDisplayMetrics());
+            holder.card.setLayoutParams(params);
+        }
         NumberFormat format = NumberFormat.getInstance();
         format.setMaximumFractionDigits(1);
 
@@ -86,6 +95,7 @@ public class searchedMoviesAdapter extends RecyclerView.Adapter<searchedMoviesAd
     public class searchedMoviesHolder extends RecyclerView.ViewHolder {
         ImageView poster;
         TextView title, overview, rating, release;
+        LinearLayout card;
         public searchedMoviesHolder(@NonNull View itemView) {
             super(itemView);
             poster = itemView.findViewById(R.id.movie_poster);
@@ -93,6 +103,7 @@ public class searchedMoviesAdapter extends RecyclerView.Adapter<searchedMoviesAd
             overview = itemView.findViewById(R.id.movie_overview);
             rating = itemView.findViewById(R.id.movie_rating);
             release = itemView.findViewById(R.id.movie_release_date);
+            card = itemView.findViewById(R.id.card);
         }
     }
 }
