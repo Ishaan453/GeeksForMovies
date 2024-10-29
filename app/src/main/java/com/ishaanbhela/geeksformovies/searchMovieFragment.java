@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -38,6 +39,8 @@ public class searchMovieFragment extends Fragment {
     private String url = MyApp.url;
     private JSONObject jsonObject;
     private TextView infoText;
+    public ProgressBar progressBar;
+    public boolean errorOccurred;
 
     // Factory method to create a new instance of the fragment with arguments
     public static searchMovieFragment newInstance(String searched) {
@@ -63,6 +66,7 @@ public class searchMovieFragment extends Fragment {
         searchedMovies = view.findViewById(R.id.searchedMovies);
         movieList = new ArrayList<>();
         infoText = view.findViewById(R.id.info_text);
+        progressBar = view.findViewById(R.id.searchProgress);
 
         searchedMovies.setLayoutManager(new LinearLayoutManager(requireContext()));
 
@@ -71,6 +75,7 @@ public class searchMovieFragment extends Fragment {
         }
 
         try {
+            progressBar.setVisibility(View.VISIBLE);
             loadMovies(1);
         } catch (JSONException e) {
             Toast.makeText(view.getContext(), "ERROR OCCURRED", Toast.LENGTH_SHORT).show();
@@ -94,6 +99,7 @@ public class searchMovieFragment extends Fragment {
                             addMovie(results, movieList);
                             searchedMoviesAdapter movieAdapter = new searchedMoviesAdapter(movieList, requireContext(), 0);
                             searchedMovies.setAdapter(movieAdapter);
+                            progressBar.setVisibility(View.GONE);
                         } catch (JSONException e) {
                             e.printStackTrace();
                             Log.e("MovieFetcher", "JSON parsing error: " + e.getMessage());
@@ -127,12 +133,17 @@ public class searchMovieFragment extends Fragment {
                             addMovie(results, movieList);
                             searchedMoviesAdapter movieAdapter = new searchedMoviesAdapter(movieList, requireContext(), 0);
                             searchedMovies.setAdapter(movieAdapter);
-
+                            progressBar.setVisibility(View.GONE);
+                            errorOccurred = false;
                         } catch (JSONException e) {
                             e.printStackTrace();
+                            errorOccurred = true;
                         }
                     },
-                    Throwable::printStackTrace);
+                    error -> {
+                        Toast.makeText(requireContext(), "Unable to load searched movie. Try again", Toast.LENGTH_SHORT).show();
+                        errorOccurred = true;
+                    });
 
             // Add the request to the Volley request queue
             Volley.newRequestQueue(requireContext()).add(jsonObjectRequest);

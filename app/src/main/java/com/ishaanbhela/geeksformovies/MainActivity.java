@@ -4,17 +4,15 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,6 +24,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonObjectRequest;
@@ -48,10 +47,12 @@ public class MainActivity extends AppCompatActivity {
     private List<searchedMoviesModel> popularMovieList;
     private List<searchedMoviesModel> searchedMovieList;
     private List<searchedMoviesModel> topRatedMovieList, upcomingMovieList;
-    private TextView searched, trending, popular, saved, topRated, upcoming;
+    private TextView trending, popular, saved, topRated, upcoming;
     private ImageView searchIcon;
     private EditText searchEditText;
     private searchMovieFragment fragment;
+    private SwipeRefreshLayout refreshLayout;
+    ProgressBar progressBarTrending, progressBarPopular, progressBarTopRated, progressBarUpcoming, progressBarSaved;
     LinearLayout content;
     String url = MyApp.url;
     int cardWidth;
@@ -72,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
         trendingMovieList = new ArrayList<>();
         searchIcon = findViewById(R.id.searchIcon);
         searchEditText = findViewById(R.id.editText);
+        refreshLayout = findViewById(R.id.refreshLayout);
         popularMovieList = new ArrayList<>();
         searchedMovieList = new ArrayList<>();
         trendingMovieList = new ArrayList<>();
@@ -83,6 +85,9 @@ public class MainActivity extends AppCompatActivity {
         int index = 0;
         trending = createTextView("Trending");
         content.addView(trending, index++);
+        progressBarTrending = createProgressBar();
+        content.addView(progressBarTrending, index++);
+        progressBarTrending.setVisibility(View.VISIBLE);
         recyclerViewTrending = createRecyclerView();
         content.addView(recyclerViewTrending, index++);
         try {
@@ -92,8 +97,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
+
         popular = createTextView("Popular");
         content.addView(popular, index++);
+        progressBarPopular = createProgressBar();
+        content.addView(progressBarPopular, index++);
+        progressBarPopular.setVisibility(View.VISIBLE);
         recyclerViewPopular = createRecyclerView();
         content.addView(recyclerViewPopular, index++);
         try {
@@ -105,7 +114,9 @@ public class MainActivity extends AppCompatActivity {
 
         topRated = createTextView("Top Rated");
         content.addView(topRated, index++);
-
+        progressBarTopRated = createProgressBar();
+        content.addView(progressBarTopRated, index++);
+        progressBarTopRated.setVisibility(View.VISIBLE);
         recyclerViewTopRated = createRecyclerView();
         content.addView(recyclerViewTopRated, index++);
         try {
@@ -117,7 +128,9 @@ public class MainActivity extends AppCompatActivity {
 
         upcoming = createTextView("Upcoming");
         content.addView(upcoming, index++);
-
+        progressBarUpcoming = createProgressBar();
+        content.addView(progressBarUpcoming, index++);
+        progressBarUpcoming.setVisibility(View.VISIBLE);
         recyclerViewUpcoming = createRecyclerView();
         content.addView(recyclerViewUpcoming, index++);
         try {
@@ -136,31 +149,7 @@ public class MainActivity extends AppCompatActivity {
 
         searchIcon.setOnClickListener(v -> {
             try {
-                if(searchEditText.getText().toString().isEmpty()){
-                    Toast.makeText(this, "No search value provided", Toast.LENGTH_SHORT).show();
-                }
-                else{
-                    searchMovieFragment existingFragment = (searchMovieFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_container);
-                    if(existingFragment == null){
-                        String searchedKeyword = searchEditText.getText().toString().trim();
-                        fragment = searchMovieFragment.newInstance(searchedKeyword);
-                        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-
-                        transaction.setCustomAnimations(R.anim.search_fragment_in, R.anim.search_fragment_out, R.anim.search_fragment_in, R.anim.search_fragment_out);
-
-                        transaction.add(R.id.fragment_container, fragment); // Use add() instead of replace()
-                        transaction.addToBackStack(null); // Add this transaction to the back stack
-                        transaction.commit();
-                    }
-
-                    else{
-                        if(!existingFragment.searched.equals(searchEditText.getText().toString())){
-                            existingFragment.searched = searchEditText.getText().toString();
-                            existingFragment.loadMovies(1);
-                            System.out.println("CHANGED");
-                        }
-                    }
-                }
+                search();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -169,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
         searchEditText.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH || (event != null && event.getAction() == KeyEvent.ACTION_DOWN && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)){
                 try {
-
+                    search();
                     return true;
                 } catch (Exception e) {
                     throw new RuntimeException(e);
@@ -177,6 +166,18 @@ public class MainActivity extends AppCompatActivity {
             }
 
             return false;
+        });
+
+        refreshLayout.setOnRefreshListener(() -> {
+            try {
+                loadTrending();
+                loadUpcoming();
+                loadPopular();
+                loadTopRated();
+                refreshLayout.setRefreshing(false);
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
         });
         
     }
@@ -203,12 +204,12 @@ public class MainActivity extends AppCompatActivity {
                         addMovie(results, upcomingMovieList);
                         movieAdapter = new searchedMoviesAdapter(upcomingMovieList, this, cardWidth);
                         recyclerViewUpcoming.setAdapter(movieAdapter);
+                        progressBarUpcoming.setVisibility(View.GONE);
                     } catch (JSONException e) {
-                        e.printStackTrace();
-                        Log.e("MovieFetcher", "JSON parsing error: " + e.getMessage());
+                        Toast.makeText(this, "Some error occurred while parsing response", Toast.LENGTH_SHORT).show();
                     }
                 },
-                error -> Log.e("MovieFetcher", "Error: " + error.getMessage())
+                error -> Toast.makeText(this, "Unable to load Upcoming Movies. Try again", Toast.LENGTH_SHORT).show()
         );
         Volley.newRequestQueue(this).add(jsonObjectRequest);
     }
@@ -235,12 +236,12 @@ public class MainActivity extends AppCompatActivity {
                         addMovie(results, topRatedMovieList);
                         movieAdapter = new searchedMoviesAdapter(topRatedMovieList, this, cardWidth);
                         recyclerViewTopRated.setAdapter(movieAdapter);
+                        progressBarTopRated.setVisibility(View.GONE);
                     } catch (JSONException e) {
-                        e.printStackTrace();
-                        Log.e("MovieFetcher", "JSON parsing error: " + e.getMessage());
+                        Toast.makeText(this, "Some error occurred while parsing response", Toast.LENGTH_SHORT).show();
                     }
                 },
-                error -> Log.e("MovieFetcher", "Error: " + error.getMessage())
+                error -> Toast.makeText(this, "Unable to load Top Rated movies. Try again", Toast.LENGTH_SHORT).show()
         );
 
         Volley.newRequestQueue(this).add(jsonObjectRequest);
@@ -311,12 +312,12 @@ public class MainActivity extends AppCompatActivity {
                         addMovie(results, popularMovieList);
                         movieAdapter = new searchedMoviesAdapter(popularMovieList, this, cardWidth);
                         recyclerViewPopular.setAdapter(movieAdapter);
+                        progressBarPopular.setVisibility(View.GONE);
                     } catch (JSONException e) {
-                        e.printStackTrace();
-                        Log.e("MovieFetcher", "JSON parsing error: " + e.getMessage());
+                        Toast.makeText(this, "Some error occurred while parsing response", Toast.LENGTH_SHORT).show();
                     }
                 },
-                error -> Log.e("MovieFetcher", "Error: " + error.getMessage())
+                error -> Toast.makeText(this, "Unable to load popular movies. Try again,", Toast.LENGTH_SHORT).show()
         );
 
         Volley.newRequestQueue(this).add(jsonObjectRequest);
@@ -345,12 +346,12 @@ public class MainActivity extends AppCompatActivity {
                         addMovie(results, trendingMovieList);
                         movieAdapter = new searchedMoviesAdapter(trendingMovieList, this, cardWidth);
                         recyclerViewTrending.setAdapter(movieAdapter);
+                        progressBarTrending.setVisibility(View.GONE);
                     } catch (JSONException e) {
-                        e.printStackTrace();
-                        Log.e("MovieFetcher", "JSON parsing error: " + e.getMessage());
+                        Toast.makeText(this, "Some error occurred while parsing response", Toast.LENGTH_SHORT).show();
                     }
                 },
-                error -> Log.e("MovieFetcher", "Error: " + error.getMessage())
+                error -> Toast.makeText(this, "Unable to load trending movies. Try again.", Toast.LENGTH_SHORT).show()
         );
         Volley.newRequestQueue(this).add(jsonObjectRequest);
     }
@@ -389,7 +390,10 @@ public class MainActivity extends AppCompatActivity {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
         );
-        params.setMargins(10, 10, 10, 10);
+        int m_l_r_t = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen.margin_l_r_t), getResources().getDisplayMetrics());
+        int m_bottom = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen.margin_bottom), getResources().getDisplayMetrics());
+        params.setMargins(m_l_r_t, 0, m_l_r_t, m_bottom);
+        textView.setElevation(5);
         textView.setLayoutParams(params);
 
         return textView;
@@ -397,13 +401,59 @@ public class MainActivity extends AppCompatActivity {
 
     private RecyclerView createRecyclerView(){
         RecyclerView recyclerView = new RecyclerView(this);
-        recyclerView.setLayoutParams(new LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
-        ));
+        );
+        params.setMargins(
+                0,
+                0,
+                0,
+                (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen.margin_l_r_t), getResources().getDisplayMetrics()));
+        recyclerView.setLayoutParams(params);
         recyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
 
         return recyclerView;
+    }
+
+    private ProgressBar createProgressBar(){
+        ProgressBar progressBar = new ProgressBar(this);
+        progressBar.getIndeterminateDrawable().setColorFilter(getColor(R.color.white), android.graphics.PorterDuff.Mode.MULTIPLY);
+        progressBar.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+
+        return progressBar;
+    }
+
+    private void search() throws JSONException {
+        if(searchEditText.getText().toString().isEmpty()){
+            Toast.makeText(this, "No search value provided", Toast.LENGTH_SHORT).show();
+        }
+        else{
+            searchMovieFragment existingFragment = (searchMovieFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+            if(existingFragment == null){
+                String searchedKeyword = searchEditText.getText().toString().trim();
+                fragment = searchMovieFragment.newInstance(searchedKeyword);
+                FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+
+                transaction.setCustomAnimations(R.anim.search_fragment_in, R.anim.search_fragment_out, R.anim.search_fragment_in, R.anim.search_fragment_out);
+
+                transaction.add(R.id.fragment_container, fragment);
+                transaction.addToBackStack(null);
+                transaction.commit();
+            }
+
+            else{
+                if(!existingFragment.searched.equals(searchEditText.getText().toString()) || existingFragment.errorOccurred){
+                    existingFragment.progressBar.setVisibility(View.VISIBLE);
+                    existingFragment.searched = searchEditText.getText().toString();
+                    existingFragment.loadMovies(1);
+                    System.out.println("CHANGED");
+                }
+            }
+        }
     }
 
     @Override

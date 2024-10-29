@@ -11,4 +11,6 @@
     <dimen name="castImg">175dp</dimen>
     <dimen name="watchOptionWidth">275dp</dimen>
     <dimen name="posterHeight">450dp</dimen>
+    <dimen name="margin_l_r_t">15dp</dimen>
+    <dimen name="margin_bottom">5dp</dimen>
 </resources>
