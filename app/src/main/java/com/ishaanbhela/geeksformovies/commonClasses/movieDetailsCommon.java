@@ -4,15 +4,11 @@ import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
 
-import androidx.recyclerview.widget.LinearLayoutManager;
-
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.ishaanbhela.geeksformovies.MyApp;
-import com.ishaanbhela.geeksformovies.movieDetails;
-import com.ishaanbhela.geeksformovies.watchOptions.watchOptionAdapter;
 import com.ishaanbhela.geeksformovies.watchOptions.watchOptionsModel;
 
 import org.json.JSONArray;

@@ -1,7 +1,5 @@
 package com.ishaanbhela.geeksformovies.searchedMovies;
 
-import static androidx.core.content.ContextCompat.startActivity;
-
 import android.content.Context;
 import android.content.Intent;
 import android.util.TypedValue;
@@ -18,8 +16,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.ishaanbhela.geeksformovies.Database.SqLiteHelper;
 import com.ishaanbhela.geeksformovies.R;
-import com.ishaanbhela.geeksformovies.movieDetails;
-import com.ishaanbhela.geeksformovies.savedMovieDetails;
+import com.ishaanbhela.geeksformovies.Movies.movieDetails;
+import com.ishaanbhela.geeksformovies.Movies.savedMovieDetails;
 
 import java.text.NumberFormat;
 import java.util.List;

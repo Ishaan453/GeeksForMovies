@@ -16,7 +16,7 @@
         android:theme="@style/Theme.GeeksForMovies"
         tools:targetApi="31">
         <activity
-            android:name=".movieDetails"
+            android:name=".Movies.movieDetails"
             android:exported="false"
             android:theme="@style/Theme.GeeksForMovies"
             android:screenOrientation="portrait"/>
@@ -30,7 +30,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".savedMovieDetails"
+        <activity android:name=".Movies.savedMovieDetails"
             android:screenOrientation="portrait"/>
     </application>
 

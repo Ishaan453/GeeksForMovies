@@ -10,8 +10,8 @@ android {
         applicationId = "com.ishaanbhela.geeksformovies"
         minSdk = 26
         targetSdk = 34
-        versionCode = 4
-        versionName = "1.11"
+        versionCode = 6
+        versionName = "2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -1,464 +1,110 @@
 package com.ishaanbhela.geeksformovies;
 
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Typeface;
 import android.os.Bundle;
-import android.util.TypedValue;
-import android.view.KeyEvent;
+import android.view.Gravity;
+import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
-import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
+import androidx.core.view.GravityCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.android.volley.Request;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
-import com.ishaanbhela.geeksformovies.Database.SqLiteHelper;
-import com.ishaanbhela.geeksformovies.searchedMovies.searchedMoviesAdapter;
-import com.ishaanbhela.geeksformovies.searchedMovies.searchedMoviesModel;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.google.android.material.navigation.NavigationView;
+import com.ishaanbhela.geeksformovies.Movies.movieHomeFragment;
+import com.ishaanbhela.geeksformovies.about.about;
 
-import java.util.ArrayList;
-import java.util.List;
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
-public class MainActivity extends AppCompatActivity {
-
-    private RecyclerView recyclerViewTrending, recyclerViewPopular, recyclerViewTopRated, recyclerViewUpcoming, recyclerViewSaved;
-    private searchedMoviesAdapter movieAdapter;
-    private List<searchedMoviesModel> trendingMovieList;
-    private List<searchedMoviesModel> popularMovieList;
-    private List<searchedMoviesModel> searchedMovieList;
-    private List<searchedMoviesModel> topRatedMovieList, upcomingMovieList;
-    private TextView trending, popular, saved, topRated, upcoming;
-    private ImageView searchIcon;
-    private EditText searchEditText;
-    private searchMovieFragment fragment;
-    private SwipeRefreshLayout refreshLayout;
-    ProgressBar progressBarTrending, progressBarPopular, progressBarTopRated, progressBarUpcoming, progressBarSaved;
-    LinearLayout content;
-    String url = MyApp.url;
-    int cardWidth;
-
+    private DrawerLayout drawerLayout;
+    private movieHomeFragment movieFragment;
+    private about aboutFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+
+        // Apply window insets for edge-to-edge experience
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
-        content = findViewById(R.id.content);
-        trendingMovieList = new ArrayList<>();
-        searchIcon = findViewById(R.id.searchIcon);
-        searchEditText = findViewById(R.id.editText);
-        refreshLayout = findViewById(R.id.refreshLayout);
-        popularMovieList = new ArrayList<>();
-        searchedMovieList = new ArrayList<>();
-        trendingMovieList = new ArrayList<>();
-        topRatedMovieList = new ArrayList<>();
-        upcomingMovieList = new ArrayList<>();
+        drawerLayout = findViewById(R.id.drawer_layout);
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+        ImageView menuIcon = findViewById(R.id.menu_icon);
 
-        cardWidth = (int) getResources().getDimension(R.dimen.searchImageSize);
-
-        int index = 0;
-        trending = createTextView("Trending");
-        content.addView(trending, index++);
-        progressBarTrending = createProgressBar();
-        content.addView(progressBarTrending, index++);
-        progressBarTrending.setVisibility(View.VISIBLE);
-        recyclerViewTrending = createRecyclerView();
-        content.addView(recyclerViewTrending, index++);
-        try {
-            loadTrending();
-        } catch (JSONException e) {
-            Toast.makeText(this, "UNABLE TO LOAD TRENDING MOVIES", Toast.LENGTH_SHORT).show();
-        }
-
-
-
-        popular = createTextView("Popular");
-        content.addView(popular, index++);
-        progressBarPopular = createProgressBar();
-        content.addView(progressBarPopular, index++);
-        progressBarPopular.setVisibility(View.VISIBLE);
-        recyclerViewPopular = createRecyclerView();
-        content.addView(recyclerViewPopular, index++);
-        try {
-            loadPopular();
-        } catch (JSONException e) {
-            Toast.makeText(this, "UNABLE TO LOAD POPULAR MOVIES", Toast.LENGTH_SHORT).show();
-        }
-
-
-        topRated = createTextView("Top Rated");
-        content.addView(topRated, index++);
-        progressBarTopRated = createProgressBar();
-        content.addView(progressBarTopRated, index++);
-        progressBarTopRated.setVisibility(View.VISIBLE);
-        recyclerViewTopRated = createRecyclerView();
-        content.addView(recyclerViewTopRated, index++);
-        try {
-            loadTopRated();
-        } catch (JSONException e) {
-            Toast.makeText(this, "UNABLE TO LOAD TOPRATED MOVIES", Toast.LENGTH_SHORT).show();
-        }
-
-
-        upcoming = createTextView("Upcoming");
-        content.addView(upcoming, index++);
-        progressBarUpcoming = createProgressBar();
-        content.addView(progressBarUpcoming, index++);
-        progressBarUpcoming.setVisibility(View.VISIBLE);
-        recyclerViewUpcoming = createRecyclerView();
-        content.addView(recyclerViewUpcoming, index++);
-        try {
-            loadUpcoming();
-        } catch (JSONException e) {
-            Toast.makeText(this, "UNABLE TO LOAD UPCOMING MOVIES", Toast.LENGTH_SHORT).show();
-        }
-
-
-        saved = createTextView("Saved");
-        content.addView(saved, index++);
-
-        recyclerViewSaved = createRecyclerView();
-        content.addView(recyclerViewSaved, index++);
-        loadSaved();
-
-        searchIcon.setOnClickListener(v -> {
-            try {
-                search();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+        menuIcon.setOnClickListener(v -> {
+            // Open the drawer
+            drawerLayout.openDrawer(GravityCompat.START);
         });
 
-        searchEditText.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_SEARCH || (event != null && event.getAction() == KeyEvent.ACTION_DOWN && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)){
-                try {
-                    search();
-                    return true;
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
+        // Initialize fragments
+        movieFragment = new movieHomeFragment();
+        aboutFragment = new about();
 
-            return false;
-        });
-
-        refreshLayout.setOnRefreshListener(() -> {
-            try {
-                loadTrending();
-                loadUpcoming();
-                loadPopular();
-                loadTopRated();
-                refreshLayout.setRefreshing(false);
-            } catch (JSONException e) {
-                throw new RuntimeException(e);
-            }
-        });
-        
-    }
-
-    private void loadUpcoming() throws JSONException{
-
-        if(!upcomingMovieList.isEmpty()){
-            movieAdapter = new searchedMoviesAdapter(upcomingMovieList, this, cardWidth);
-            recyclerViewUpcoming.setAdapter(movieAdapter);
-            return;
-        }
-
-        JSONObject jsonRequest = new JSONObject();
-        jsonRequest.put("type", "upcoming");
-
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
-                Request.Method.POST,
-                url,
-                jsonRequest,
-                response -> {
-                    try {
-                        System.out.println("GOT RESPONSE UPCOMING");
-                        JSONArray results = response.getJSONArray("results");
-                        addMovie(results, upcomingMovieList);
-                        movieAdapter = new searchedMoviesAdapter(upcomingMovieList, this, cardWidth);
-                        recyclerViewUpcoming.setAdapter(movieAdapter);
-                        progressBarUpcoming.setVisibility(View.GONE);
-                    } catch (JSONException e) {
-                        Toast.makeText(this, "Some error occurred while parsing response", Toast.LENGTH_SHORT).show();
-                    }
-                },
-                error -> Toast.makeText(this, "Unable to load Upcoming Movies. Try again", Toast.LENGTH_SHORT).show()
-        );
-        Volley.newRequestQueue(this).add(jsonObjectRequest);
-    }
-
-    private void loadTopRated() throws JSONException{
-
-        if(!topRatedMovieList.isEmpty()){
-            movieAdapter = new searchedMoviesAdapter(topRatedMovieList, this, cardWidth);
-            recyclerViewTopRated.setAdapter(movieAdapter);
-            return;
-        }
-
-        JSONObject jsonRequest = new JSONObject();
-        jsonRequest.put("type", "topRated");
-
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
-                Request.Method.POST,
-                url,
-                jsonRequest,
-                response -> {
-                    try {
-                        System.out.println("GOT RESPONSE TOP RATED");
-                        JSONArray results = response.getJSONArray("results");
-                        addMovie(results, topRatedMovieList);
-                        movieAdapter = new searchedMoviesAdapter(topRatedMovieList, this, cardWidth);
-                        recyclerViewTopRated.setAdapter(movieAdapter);
-                        progressBarTopRated.setVisibility(View.GONE);
-                    } catch (JSONException e) {
-                        Toast.makeText(this, "Some error occurred while parsing response", Toast.LENGTH_SHORT).show();
-                    }
-                },
-                error -> Toast.makeText(this, "Unable to load Top Rated movies. Try again", Toast.LENGTH_SHORT).show()
-        );
-
-        Volley.newRequestQueue(this).add(jsonObjectRequest);
-    }
-
-    private void loadSaved() {
-        SqLiteHelper dbHelper = new SqLiteHelper(this);  // Initialize the SQLite helper
-        List<searchedMoviesModel> savedMoviesList = new ArrayList<>();
-
-        // Fetch saved movies from the database
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT * FROM movies", null);
-
-        // If there are saved movies, iterate over the results and add them to the list
-        if (cursor.moveToFirst()) {
-            do {
-                // Extract data from the cursor
-                int idIndex = cursor.getColumnIndex("id");
-                int titleIndex = cursor.getColumnIndex("title");
-                int overviewIndex = cursor.getColumnIndex("overview");
-                int releaseDateIndex = cursor.getColumnIndex("release_date");
-                int posterPathIndex = cursor.getColumnIndex("poster_path");
-                int ratingIndex = cursor.getColumnIndex("rating");
-
-                // Ensure all indices are valid
-                if (idIndex != -1 && titleIndex != -1 && overviewIndex != -1 && releaseDateIndex != -1 && posterPathIndex != -1 && ratingIndex != -1) {
-                    int id = cursor.getInt(idIndex);
-                    String title = cursor.getString(titleIndex);
-                    String overview = cursor.getString(overviewIndex);
-                    String releaseDate = cursor.getString(releaseDateIndex);
-                    String posterPath = cursor.getString(posterPathIndex);
-                    double rating = cursor.getDouble(ratingIndex);
-
-                    // Create a movie model object and add it to the list
-                    searchedMoviesModel movie = new searchedMoviesModel(id, title, overview, releaseDate, posterPath, rating);
-                    savedMoviesList.add(movie);
-                }
-            } while (cursor.moveToNext());
-        }
-
-        cursor.close();  // Close cursor after use
-
-        // Set up the RecyclerView with the saved movies
-        movieAdapter = new searchedMoviesAdapter(savedMoviesList, this, cardWidth);
-        recyclerViewSaved.setAdapter(movieAdapter);
-
-    }
-
-    private void loadPopular() throws JSONException {
-        if(!popularMovieList.isEmpty()){
-            movieAdapter = new searchedMoviesAdapter(popularMovieList, this, cardWidth);
-            recyclerViewPopular.setAdapter(movieAdapter);
-            return;
-        }
-
-        JSONObject jsonRequest = new JSONObject();
-        jsonRequest.put("type", "popular");
-
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
-                Request.Method.POST,
-                url,
-                jsonRequest,
-                response -> {
-                    try {
-                        System.out.println("GOT RESPONSE POPULAR");
-                        System.out.println(response.toString());
-                        JSONArray results = response.getJSONArray("results");
-                        addMovie(results, popularMovieList);
-                        movieAdapter = new searchedMoviesAdapter(popularMovieList, this, cardWidth);
-                        recyclerViewPopular.setAdapter(movieAdapter);
-                        progressBarPopular.setVisibility(View.GONE);
-                    } catch (JSONException e) {
-                        Toast.makeText(this, "Some error occurred while parsing response", Toast.LENGTH_SHORT).show();
-                    }
-                },
-                error -> Toast.makeText(this, "Unable to load popular movies. Try again,", Toast.LENGTH_SHORT).show()
-        );
-
-        Volley.newRequestQueue(this).add(jsonObjectRequest);
-    }
-
-    private void loadTrending() throws JSONException {
-        
-        if(!trendingMovieList.isEmpty()){
-            movieAdapter = new searchedMoviesAdapter(trendingMovieList, this, cardWidth);
-            recyclerViewTrending.setAdapter(movieAdapter);
-            return;
-        }
-
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("type", "trending");
-
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
-                Request.Method.POST,
-                url,
-                jsonObject,
-                response -> {
-                    try {
-                        System.out.println("GOT RESPONSE TRENDING");
-                        System.out.println(response.toString());
-                        JSONArray results = response.getJSONArray("results");
-                        addMovie(results, trendingMovieList);
-                        movieAdapter = new searchedMoviesAdapter(trendingMovieList, this, cardWidth);
-                        recyclerViewTrending.setAdapter(movieAdapter);
-                        progressBarTrending.setVisibility(View.GONE);
-                    } catch (JSONException e) {
-                        Toast.makeText(this, "Some error occurred while parsing response", Toast.LENGTH_SHORT).show();
-                    }
-                },
-                error -> Toast.makeText(this, "Unable to load trending movies. Try again.", Toast.LENGTH_SHORT).show()
-        );
-        Volley.newRequestQueue(this).add(jsonObjectRequest);
-    }
-
-    private void addMovie(JSONArray results, List<searchedMoviesModel> movieList){
-        try{
-            for (int i = 0; i < results.length(); i++) {
-                JSONObject movieJson = results.getJSONObject(i);
-
-                // Extracting the data
-                int id = movieJson.getInt("id");
-                String title = movieJson.getString("title");
-                String overview = movieJson.getString("overview");
-                String releaseDate = movieJson.getString("release_date");
-                String posterPath = movieJson.getString("poster_path");
-                double rating = movieJson.getDouble("vote_average");
-
-                // Creating a new movie model instance and adding it to the list
-                searchedMoviesModel movie = new searchedMoviesModel(id, title, overview, releaseDate, posterPath, rating);
-                movieList.add(movie);
-            }
-        }catch (Exception e){
-            System.out.println("ERRORR");
-        }
-    }
-
-
-    private TextView createTextView(String text) {
-        TextView textView = new TextView(this);
-        textView.setText(text);
-        textView.setTextColor(getColor(R.color.white));
-        textView.setTypeface(null, Typeface.BOLD);
-        float pixelValue = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen.TextSize), getResources().getDisplayMetrics());
-        textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, pixelValue);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-        );
-        int m_l_r_t = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen.margin_l_r_t), getResources().getDisplayMetrics());
-        int m_bottom = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen.margin_bottom), getResources().getDisplayMetrics());
-        params.setMargins(m_l_r_t, 0, m_l_r_t, m_bottom);
-        textView.setElevation(5);
-        textView.setLayoutParams(params);
-
-        return textView;
-    }
-
-    private RecyclerView createRecyclerView(){
-        RecyclerView recyclerView = new RecyclerView(this);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-        );
-        params.setMargins(
-                0,
-                0,
-                0,
-                (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, getResources().getDimension(R.dimen.margin_l_r_t), getResources().getDisplayMetrics()));
-        recyclerView.setLayoutParams(params);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
-
-        return recyclerView;
-    }
-
-    private ProgressBar createProgressBar(){
-        ProgressBar progressBar = new ProgressBar(this);
-        progressBar.getIndeterminateDrawable().setColorFilter(getColor(R.color.white), android.graphics.PorterDuff.Mode.MULTIPLY);
-        progressBar.setLayoutParams(new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-        ));
-
-        return progressBar;
-    }
-
-    private void search() throws JSONException {
-        if(searchEditText.getText().toString().isEmpty()){
-            Toast.makeText(this, "No search value provided", Toast.LENGTH_SHORT).show();
-        }
-        else{
-            searchMovieFragment existingFragment = (searchMovieFragment) getSupportFragmentManager().findFragmentById(R.id.fragment_container);
-            if(existingFragment == null){
-                String searchedKeyword = searchEditText.getText().toString().trim();
-                fragment = searchMovieFragment.newInstance(searchedKeyword);
-                FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-
-                transaction.setCustomAnimations(R.anim.search_fragment_in, R.anim.search_fragment_out, R.anim.search_fragment_in, R.anim.search_fragment_out);
-
-                transaction.add(R.id.fragment_container, fragment);
-                transaction.addToBackStack(null);
-                transaction.commit();
-            }
-
-            else{
-                if(!existingFragment.searched.equals(searchEditText.getText().toString()) || existingFragment.errorOccurred){
-                    existingFragment.progressBar.setVisibility(View.VISIBLE);
-                    existingFragment.searched = searchEditText.getText().toString();
-                    existingFragment.loadMovies(1);
-                    System.out.println("CHANGED");
-                }
-            }
+        // Load the initial fragment if savedInstanceState is null
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.movieFrag, movieFragment, "MOVIE_FRAGMENT_TAG") // Add movie fragment
+                    .commit();
         }
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        loadSaved();
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        int id = item.getItemId();
+        Fragment fragment = getCurrentFragment();
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction transaction = fragmentManager.beginTransaction();
+
+        if (id == R.id.nav_movies) {
+            // Check if the movie fragment is already added
+            if (!movieFragment.isAdded()) {
+                transaction.add(R.id.movieFrag, movieFragment, "MOVIE_FRAGMENT_TAG");
+            }
+            // Hide current fragment and show the movie fragment
+            if (fragment != null) {
+                transaction.hide(aboutFragment);
+            }
+            transaction.show(movieFragment);
+            transaction.commit();
+        } else if (id == R.id.nav_about) {
+            // Check if the about fragment is already added
+            if (!aboutFragment.isAdded()) {
+                System.out.println("ABOUT ADDED");
+                transaction.add(R.id.movieFrag, aboutFragment, "ABOUT_FRAGMENT_TAG");
+            }
+            // Hide current fragment and show the about fragment
+            if (fragment != null) {
+                System.out.println("MOVIES HIDDEN");
+                transaction.hide(movieFragment);
+            }
+            System.out.println("ABOUT SHOWN");
+            transaction.show(aboutFragment);
+            transaction.commit();
+        } else {
+            return false; // Invalid menu item selected
+        }
+
+        drawerLayout.closeDrawer(GravityCompat.START);
+        return true;
+    }
+
+    // Helper method to get the currently displayed fragment
+    private Fragment getCurrentFragment() {
+        return getSupportFragmentManager().findFragmentById(R.id.movieFrag);
     }
 }
