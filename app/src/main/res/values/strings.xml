@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">GeeksForMovies</string>
     <string name="disclaimer">This product uses the TMDB API but is not endorsed or certified by TMDB."</string>
+    <string name="about">Hi! I’m Ishaan, and welcome to the GeeksForMovies App.\n\n
+        I created this app as part of my journey in developing intuitive and enjoyable apps. Here, you’ll find the latest movies trending globally, top-rated gems, and much more—all designed to make your movie search simple and fun.\n\n
+        This app is a portfolio project designed to showcase my skills and experience in Android application development, and your feedback is invaluable as I continue to grow in this field.\n\n
+        Thanks for giving it a try!\n
+        Happy movie hunting!\n</string>
 </resources>

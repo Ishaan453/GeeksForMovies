@@ -3,10 +3,12 @@
 
     <item
         android:id="@+id/nav_movies"
-        android:title="Movies" />
+        android:title="Movies"
+        android:icon="@drawable/baseline_movie_24"/>
 
     <item
         android:id="@+id/nav_about"
-        android:title="About" />
+        android:title="About"
+        android:icon="@drawable/baseline_info_24"/>
 
 </menu>

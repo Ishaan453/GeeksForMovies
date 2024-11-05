@@ -48,7 +48,6 @@ public class movieHomeFragment extends Fragment {
     private searchedMoviesAdapter movieAdapter;
     private List<searchedMoviesModel> trendingMovieList;
     private List<searchedMoviesModel> popularMovieList;
-    private List<searchedMoviesModel> searchedMovieList;
     private List<searchedMoviesModel> topRatedMovieList, upcomingMovieList;
     private TextView trending, popular, saved, topRated, upcoming;
     private ImageView searchIcon;
@@ -76,7 +75,6 @@ public class movieHomeFragment extends Fragment {
         searchEditText = view.findViewById(R.id.editText);
         refreshLayout = view.findViewById(R.id.refreshLayout);
         popularMovieList = new ArrayList<>();
-        searchedMovieList = new ArrayList<>();
         trendingMovieList = new ArrayList<>();
         topRatedMovieList = new ArrayList<>();
         upcomingMovieList = new ArrayList<>();

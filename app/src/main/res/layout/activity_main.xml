@@ -33,6 +33,7 @@
                 android:src="@drawable/baseline_menu_24" />
 
             <TextView
+                android:id="@+id/menuHead"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Movies"
@@ -56,7 +57,18 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="start"
+        android:background="#121212"
+        android:fitsSystemWindows="true"
+        android:elevation="8dp"
+
         app:headerLayout="@layout/nav_header"
-        app:menu="@menu/drawer_menu" />
+        app:menu="@menu/drawer_menu"
+
+        app:itemIconTint="@color/white"
+        app:itemTextColor="#EEEEEE"
+
+        app:itemHorizontalPadding="36dp"
+        app:itemIconSize="24dp"
+        app:itemTextAppearance="@style/CustomNavMenuItemText" />
 
 </androidx.drawerlayout.widget.DrawerLayout>
