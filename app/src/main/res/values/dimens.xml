@@ -13,4 +13,5 @@
     <dimen name="posterHeight">450dp</dimen>
     <dimen name="margin_l_r_t">15dp</dimen>
     <dimen name="margin_bottom">5dp</dimen>
+    <dimen name="appLogoSize">120dp</dimen>
 </resources>

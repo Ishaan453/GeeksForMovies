@@ -11,4 +11,5 @@
     <dimen name="castImg">250dp</dimen>                  <!-- Increased cast image size (25% more) -->
     <dimen name="watchOptionWidth">400dp</dimen>         <!-- Increased watch option width (33% more) -->
     <dimen name="posterHeight">1000dp</dimen>            <!-- Increased poster height (25% more) -->
+    <dimen name="appLogoSize">250dp</dimen>
 </resources>

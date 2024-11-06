@@ -56,6 +56,8 @@ public class SqLiteHelper extends SQLiteOpenHelper {
                 "character TEXT, " +
                 "FOREIGN KEY(movie_id) REFERENCES movies(id) ON DELETE CASCADE)";
         db.execSQL(CREATE_CAST_TABLE);
+
+
     }
 
     @Override
