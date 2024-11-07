@@ -7,6 +7,11 @@
         android:icon="@drawable/baseline_movie_24"/>
 
     <item
+        android:id="@+id/nav_preference"
+        android:title="Preference"
+        android:icon="@drawable/sharp_gear"/>
+
+    <item
         android:id="@+id/nav_about"
         android:title="About"
         android:icon="@drawable/baseline_info_24"/>

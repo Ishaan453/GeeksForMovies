@@ -90,16 +90,6 @@ public class movieHomeFragment extends Fragment {
             progressBarTrending.setVisibility(View.VISIBLE);
             recyclerViewTrending = createRecyclerView();
             content.addView(recyclerViewTrending, index++);
-            try {
-                loadTrending();
-            } catch (JSONException e) {
-                if(isAdded()){
-                    Toast.makeText(requireContext(), "UNABLE TO LOAD TRENDING MOVIES", Toast.LENGTH_SHORT).show();
-                }
-
-            }
-
-
 
             popular = createTextView("Popular");
             content.addView(popular, index++);
@@ -108,15 +98,6 @@ public class movieHomeFragment extends Fragment {
             progressBarPopular.setVisibility(View.VISIBLE);
             recyclerViewPopular = createRecyclerView();
             content.addView(recyclerViewPopular, index++);
-            try {
-                loadPopular();
-            } catch (JSONException e) {
-                if(isAdded()){
-                    Toast.makeText(requireContext(), "UNABLE TO LOAD POPULAR MOVIES", Toast.LENGTH_SHORT).show();
-                }
-
-            }
-
 
             topRated = createTextView("Top Rated");
             content.addView(topRated, index++);
@@ -125,15 +106,6 @@ public class movieHomeFragment extends Fragment {
             progressBarTopRated.setVisibility(View.VISIBLE);
             recyclerViewTopRated = createRecyclerView();
             content.addView(recyclerViewTopRated, index++);
-            try {
-                loadTopRated();
-            } catch (JSONException e) {
-                if(isAdded()){
-                    Toast.makeText(requireContext(), "UNABLE TO LOAD TOPRATED MOVIES", Toast.LENGTH_SHORT).show();
-                }
-
-            }
-
 
             upcoming = createTextView("Upcoming");
             content.addView(upcoming, index++);
@@ -142,8 +114,9 @@ public class movieHomeFragment extends Fragment {
             progressBarUpcoming.setVisibility(View.VISIBLE);
             recyclerViewUpcoming = createRecyclerView();
             content.addView(recyclerViewUpcoming, index++);
+
             try {
-                loadUpcoming();
+                loadAll();
             } catch (JSONException e) {
                 if(isAdded()){
                     Toast.makeText(requireContext(), "UNABLE TO LOAD UPCOMING MOVIES", Toast.LENGTH_SHORT).show();
@@ -185,10 +158,7 @@ public class movieHomeFragment extends Fragment {
 
         refreshLayout.setOnRefreshListener(() -> {
             try {
-                loadTrending();
-                loadUpcoming();
-                loadPopular();
-                loadTopRated();
+                loadAll();
                 refreshLayout.setRefreshing(false);
             } catch (JSONException e) {
                 throw new RuntimeException(e);
@@ -197,16 +167,25 @@ public class movieHomeFragment extends Fragment {
 
     }
 
-    private void loadUpcoming() throws JSONException{
 
-        if(!upcomingMovieList.isEmpty() && isAdded()){
+    private void loadAll() throws JSONException {
+        if(!upcomingMovieList.isEmpty() && !topRatedMovieList.isEmpty() && !trendingMovieList.isEmpty() && !popularMovieList.isEmpty() && isAdded()){
             movieAdapter = new searchedMoviesAdapter(upcomingMovieList, requireContext(), cardWidth);
             recyclerViewUpcoming.setAdapter(movieAdapter);
+
+            movieAdapter = new searchedMoviesAdapter(topRatedMovieList, requireContext(), cardWidth);
+            recyclerViewTopRated.setAdapter(movieAdapter);
+
+            movieAdapter = new searchedMoviesAdapter(popularMovieList, requireContext(), cardWidth);
+            recyclerViewPopular.setAdapter(movieAdapter);
+
+            movieAdapter = new searchedMoviesAdapter(trendingMovieList, requireContext(), cardWidth);
+            recyclerViewTrending.setAdapter(movieAdapter);
             return;
         }
 
         JSONObject jsonRequest = new JSONObject();
-        jsonRequest.put("type", "upcoming");
+        jsonRequest.put("type", "home_page");
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
                 Request.Method.POST,
@@ -214,9 +193,36 @@ public class movieHomeFragment extends Fragment {
                 jsonRequest,
                 response -> {
                     try {
-                        System.out.println("GOT RESPONSE UPCOMING");
-                        JSONArray results = response.getJSONArray("results");
-                        addMovie(results, upcomingMovieList);
+                        JSONObject trendingObj = response.getJSONObject("trending");
+                        JSONArray trendingArr = trendingObj.getJSONArray("results");
+                        addMovie(trendingArr, trendingMovieList);
+                        if(isAdded()){
+                            movieAdapter = new searchedMoviesAdapter(trendingMovieList, requireContext(), cardWidth);
+                            recyclerViewTrending.setAdapter(movieAdapter);
+                            progressBarTrending.setVisibility(View.GONE);
+                        }
+
+                        JSONObject popularObj = response.getJSONObject("popular");
+                        JSONArray popularArr = popularObj.getJSONArray("results");
+                        addMovie(popularArr, popularMovieList);
+                        if(isAdded()){
+                            movieAdapter = new searchedMoviesAdapter(popularMovieList, requireContext(), cardWidth);
+                            recyclerViewPopular.setAdapter(movieAdapter);
+                            progressBarPopular.setVisibility(View.GONE);
+                        }
+
+                        JSONObject topRatedObj = response.getJSONObject("toprated");
+                        JSONArray topRatedArr = topRatedObj.getJSONArray("results");
+                        addMovie(topRatedArr, topRatedMovieList);
+                        if(isAdded()){
+                            movieAdapter = new searchedMoviesAdapter(topRatedMovieList, requireContext(), cardWidth);
+                            recyclerViewTopRated.setAdapter(movieAdapter);
+                            progressBarTopRated.setVisibility(View.GONE);
+                        }
+
+                        JSONObject upcomingObj = response.getJSONObject("upcoming");
+                        JSONArray upcomingArr = upcomingObj.getJSONArray("results");
+                        addMovie(upcomingArr, upcomingMovieList);
                         if(isAdded()){
                             movieAdapter = new searchedMoviesAdapter(upcomingMovieList, requireContext(), cardWidth);
                             recyclerViewUpcoming.setAdapter(movieAdapter);
@@ -232,50 +238,6 @@ public class movieHomeFragment extends Fragment {
                 error -> {
                     if (isAdded()){
                         Toast.makeText(requireContext(), "Unable to load Upcoming Movies. Try again", Toast.LENGTH_SHORT).show();
-                    }
-                }
-        );
-        if(isAdded()){
-            Volley.newRequestQueue(requireContext()).add(jsonObjectRequest);
-        }
-    }
-
-    private void loadTopRated() throws JSONException{
-
-        if(!topRatedMovieList.isEmpty() && isAdded()){
-            movieAdapter = new searchedMoviesAdapter(topRatedMovieList, requireContext(), cardWidth);
-            recyclerViewTopRated.setAdapter(movieAdapter);
-            return;
-        }
-
-        JSONObject jsonRequest = new JSONObject();
-        jsonRequest.put("type", "topRated");
-
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
-                Request.Method.POST,
-                url,
-                jsonRequest,
-                response -> {
-                    try {
-                        System.out.println("GOT RESPONSE TOP RATED");
-                        JSONArray results = response.getJSONArray("results");
-                        addMovie(results, topRatedMovieList);
-                        if(isAdded()){
-                            movieAdapter = new searchedMoviesAdapter(topRatedMovieList, requireContext(), cardWidth);
-                            recyclerViewTopRated.setAdapter(movieAdapter);
-                            progressBarTopRated.setVisibility(View.GONE);
-                        }
-
-                    } catch (JSONException e) {
-                        if(isAdded()){
-                            Toast.makeText(requireContext(), "Some error occurred while parsing response", Toast.LENGTH_SHORT).show();
-                        }
-
-                    }
-                },
-                error -> {
-                    if(isAdded()){
-                        Toast.makeText(requireContext(), "Unable to load Top Rated movies. Try again", Toast.LENGTH_SHORT).show();
                     }
                 }
         );
@@ -327,100 +289,6 @@ public class movieHomeFragment extends Fragment {
             movieAdapter = new searchedMoviesAdapter(savedMoviesList, requireContext(), cardWidth);
             recyclerViewSaved.setAdapter(movieAdapter);
         }
-    }
-
-    private void loadPopular() throws JSONException {
-        if(!popularMovieList.isEmpty()){
-            if(isAdded()){
-                movieAdapter = new searchedMoviesAdapter(popularMovieList, requireContext(), cardWidth);
-            }
-            recyclerViewPopular.setAdapter(movieAdapter);
-            return;
-        }
-
-        JSONObject jsonRequest = new JSONObject();
-        jsonRequest.put("type", "popular");
-
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
-                Request.Method.POST,
-                url,
-                jsonRequest,
-                response -> {
-                    try {
-                        System.out.println("GOT RESPONSE POPULAR");
-                        System.out.println(response.toString());
-                        JSONArray results = response.getJSONArray("results");
-                        addMovie(results, popularMovieList);
-                        if(isAdded()){
-                            movieAdapter = new searchedMoviesAdapter(popularMovieList, requireContext(), cardWidth);
-                            recyclerViewPopular.setAdapter(movieAdapter);
-                            progressBarPopular.setVisibility(View.GONE);
-                        }
-
-                    } catch (JSONException e) {
-                        if(isAdded()){
-                            Toast.makeText(requireContext(), "Some error occurred while parsing response", Toast.LENGTH_SHORT).show();
-                        }
-
-                    }
-                },
-                error -> {
-                    if(isAdded()){
-                        Toast.makeText(requireContext(), "Unable to load popular movies. Try again,", Toast.LENGTH_SHORT).show();
-                    }
-                }
-        );
-
-        if(isAdded()){
-            Volley.newRequestQueue(requireContext()).add(jsonObjectRequest);
-        }
-
-    }
-
-    private void loadTrending() throws JSONException {
-
-        if(!trendingMovieList.isEmpty() && isAdded()){
-            movieAdapter = new searchedMoviesAdapter(trendingMovieList, requireContext(), cardWidth);
-            recyclerViewTrending.setAdapter(movieAdapter);
-            return;
-        }
-
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("type", "trending");
-
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
-                Request.Method.POST,
-                url,
-                jsonObject,
-                response -> {
-                    try {
-                        System.out.println("GOT RESPONSE TRENDING");
-                        System.out.println(response.toString());
-                        JSONArray results = response.getJSONArray("results");
-                        addMovie(results, trendingMovieList);
-                        if(isAdded()){
-                            movieAdapter = new searchedMoviesAdapter(trendingMovieList, requireContext(), cardWidth);
-                            recyclerViewTrending.setAdapter(movieAdapter);
-                            progressBarTrending.setVisibility(View.GONE);
-                        }
-
-                    } catch (JSONException e) {
-                        if(isAdded()){
-                            Toast.makeText(requireContext(), "Some error occurred while parsing response", Toast.LENGTH_SHORT).show();
-                        }
-
-                    }
-                },
-                error -> {
-                    if (isAdded()){
-                        Toast.makeText(requireContext(), "Unable to load trending movies. Try again.", Toast.LENGTH_SHORT).show();
-                    }
-                }
-        );
-        if(isAdded()){
-            Volley.newRequestQueue(requireContext()).add(jsonObjectRequest);
-        }
-
     }
 
     private void addMovie(JSONArray results, List<searchedMoviesModel> movieList){

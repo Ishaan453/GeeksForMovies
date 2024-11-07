@@ -17,6 +17,7 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.navigation.NavigationView;
 import com.ishaanbhela.geeksformovies.Movies.movieHomeFragment;
+import com.ishaanbhela.geeksformovies.Preferences.userPreferenceFragmentClass;
 import com.ishaanbhela.geeksformovies.about.about;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -24,6 +25,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private DrawerLayout drawerLayout;
     private movieHomeFragment movieFragment;
     private about aboutFragment;
+    private userPreferenceFragmentClass preferenceFragment;
     private TextView menuHead;
 
     @Override
@@ -49,13 +51,16 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // Initialize fragments
         movieFragment = new movieHomeFragment();
         aboutFragment = new about();
+        preferenceFragment = new userPreferenceFragmentClass();
 
         // Load the initial fragment only if savedInstanceState is null
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.movieFrag, movieFragment, "MOVIE_FRAGMENT")
                     .add(R.id.movieFrag, aboutFragment, "ABOUT_FRAGMENT")
+                    .add(R.id.movieFrag, preferenceFragment, "PREFERENCE_FRAGMENT")
                     .hide(aboutFragment) // Hide 'about' fragment initially
+                    .hide(preferenceFragment)
                     .commit();
         }
     }
@@ -68,12 +73,27 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         // Show or hide fragments based on the selected item
         if (id == R.id.nav_movies) {
-            transaction.hide(aboutFragment).show(movieFragment);
+            transaction
+                    .hide(aboutFragment)
+                    .hide(preferenceFragment)
+                    .show(movieFragment);
             menuHead.setText("Movies");
-        } else if (id == R.id.nav_about) {
-            transaction.hide(movieFragment).show(aboutFragment);
+        }
+        else if (id == R.id.nav_about) {
+            transaction
+                    .hide(movieFragment)
+                    .hide(preferenceFragment)
+                    .show(aboutFragment);
             menuHead.setText("About");
-        } else {
+        }
+        else if (id == R.id.nav_preference){
+            transaction
+                    .hide(movieFragment)
+                    .hide(aboutFragment)
+                    .show(preferenceFragment);
+            menuHead.setText("Preference");
+        }
+        else {
             return false;
         }
 

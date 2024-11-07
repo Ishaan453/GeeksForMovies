@@ -63,6 +63,7 @@ public class movieDetails extends AppCompatActivity {
     private int runtime;
     private long budget, revenue;
     private Double rating;
+    movieDetailsCommon common;
 
     String url = MyApp.url;
 
@@ -110,57 +111,17 @@ public class movieDetails extends AppCompatActivity {
 
         movieId = getIntent().getIntExtra("MOVIE_ID", -1);
 
-        movieDetailsCommon common = new movieDetailsCommon();
+        common = new movieDetailsCommon();
 
         // Call the API to get movie details
         try {
-            getMovieDetails(movieId);
-
-            common.fetchWatchOptions(this, movieId, new movieDetailsCommon.watchOptionsCallback() {
-                @Override
-                public void onSuccess(JSONObject response) throws JSONException {
-                    common.populateWatchOptionsSuccess(response, watchOptionList);
-                    watchOptionsRecyclerView.setLayoutManager(new LinearLayoutManager(movieDetails.this, LinearLayoutManager.HORIZONTAL, false));
-                    watchOptionAdapter watchAdapter = new watchOptionAdapter(watchOptionList);
-                    watchOptionsRecyclerView.setAdapter(watchAdapter);
-                }
-
-                @Override
-                public void onError(String error) {
-                    watchOptionList = new ArrayList<>();
-                    watchOptionsRecyclerView.setLayoutManager(new LinearLayoutManager(movieDetails.this, LinearLayoutManager.HORIZONTAL, false));
-                    watchOptionAdapter watchAdapter = new watchOptionAdapter(watchOptionList);
-                    watchOptionsRecyclerView.setAdapter(watchAdapter);
-                }
-            });
-
+            getAllMovieDetails(movieId);
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
 
-
         if(dbHelper.isMovieSaved(movieId)){
             saveUnsave.setText("Delete from Saved Movies");
-        }
-
-        try {
-            common.fetchTrailerURL(this, movieId, new movieDetailsCommon.TrailerCallback() {
-                @Override
-                public void onSuccess(String result) {
-                    trailerURL = result;
-                    if(!trailerURL.equals("NA")){
-                        playTrailer.setVisibility(View.VISIBLE);
-                    }
-
-                }
-
-                @Override
-                public void onError(String error) {
-                    Toast.makeText(movieDetails.this, "SOME ERROR OCCURED", Toast.LENGTH_SHORT).show();
-                }
-            });
-        } catch (JSONException e) {
-            Toast.makeText(movieDetails.this, "SOME ERROR OCCURED", Toast.LENGTH_SHORT).show();
         }
 
         saveUnsave.setOnClickListener(v -> {
@@ -181,41 +142,41 @@ public class movieDetails extends AppCompatActivity {
         });
     }
 
-
-
-    private void getMovieDetails(int movieId) throws JSONException {
+    private void getAllMovieDetails(int movieId) throws JSONException {
         RequestQueue queue = Volley.newRequestQueue(this);
 
         NumberFormat format = NumberFormat.getInstance();
         format.setMaximumFractionDigits(2);
 
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("type", "movieDetails");
+        jsonObject.put("type", "allMovieDetails");
         jsonObject.put("movieId", ""+movieId);
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url, jsonObject,
                 response -> {
                     try {
-                        // Populate UI with data
-                        title = response.getString("title");
+                        // ****************************** DETAIL SECTION **************************************
+                        JSONObject details = response.getJSONObject("detail");
+
+                        title = details.getString("title");
                         movieTitle.setText(title);
 
-                        tagline = response.getString("tagline");
+                        tagline = details.getString("tagline");
                         movieTagline.setText(tagline);
 
-                        releaseDate = response.getString("release_date");
+                        releaseDate = details.getString("release_date");
                         movieReleaseDate.setText(releaseDate);
 
-                        runtime = response.getInt("runtime");
+                        runtime = details.getInt("runtime");
                         movieRuntime.setText("Runtime: " + format.format(runtime) + " min");
 
-                        rating = response.getDouble("vote_average");
+                        rating = details.getDouble("vote_average");
                         movieRating.setText("Rating: " + format.format(rating) + "/10");
 
-                        overview = response.getString("overview");
+                        overview = details.getString("overview");
                         movieOverview.setText(overview);
 
-                        posterPath = response.getString("poster_path");
+                        posterPath = details.getString("poster_path");
 
                         // Load Poster Image using Picasso
                         Glide.with(movieDetails.this).load("https://image.tmdb.org/t/p/w500" + posterPath)
@@ -224,8 +185,8 @@ public class movieDetails extends AppCompatActivity {
                                 .into(moviePoster);
 
                         // Budget and Revenue
-                        budget = response.getLong("budget");
-                        revenue = response.getLong("revenue");
+                        budget = details.getLong("budget");
+                        revenue = details.getLong("revenue");
                         if(budget != 0){
                             movieBudget.setText("Budget: $" + format.format(budget));
                         }
@@ -241,7 +202,7 @@ public class movieDetails extends AppCompatActivity {
                         }
 
                         // Genres
-                        JSONArray genresArray = response.getJSONArray("genres");
+                        JSONArray genresArray = details.getJSONArray("genres");
                         StringBuilder genres = new StringBuilder();
                         for (int i = 0; i < genresArray.length(); i++) {
                             JSONObject genre = genresArray.getJSONObject(i);
@@ -254,7 +215,7 @@ public class movieDetails extends AppCompatActivity {
                         movieGenres.setText(this.genres);
 
                         // Spoken Languages
-                        JSONArray languagesArray = response.getJSONArray("spoken_languages");
+                        JSONArray languagesArray = details.getJSONArray("spoken_languages");
                         StringBuilder languages = new StringBuilder();
                         for (int i = 0; i < languagesArray.length(); i++) {
                             JSONObject language = languagesArray.getJSONObject(i);
@@ -267,7 +228,7 @@ public class movieDetails extends AppCompatActivity {
                         movieLanguages.setText("Languages: " + this.languages);
 
                         // Production Companies
-                        JSONArray productionCompaniesArray = response.getJSONArray("production_companies");
+                        JSONArray productionCompaniesArray = details.getJSONArray("production_companies");
                         productionCompanyList.clear();
                         for (int i = 0; i < productionCompaniesArray.length(); i++) {
                             JSONObject company = productionCompaniesArray.getJSONObject(i);
@@ -283,7 +244,7 @@ public class movieDetails extends AppCompatActivity {
                         productionCompaniesRecyclerView.setAdapter(productionCompaniesAdapter);
 
 
-                        JSONObject credits = response.getJSONObject("credits");
+                        JSONObject credits = details.getJSONObject("credits");
                         JSONArray castArray = credits.getJSONArray("cast");
                         // Loop through the cast array
                         for (int i = 0; i < castArray.length(); i++) {
@@ -304,15 +265,31 @@ public class movieDetails extends AppCompatActivity {
                         castAdapter cast_adapter = new castAdapter(casts, this);
                         castsRecyclerView.setAdapter(cast_adapter);
 
+
+
+                        // *********************************** TRAILER PART *********************************************
+                        JSONObject trailer = response.getJSONObject("trailer");
+                        trailerURL = trailer.getString("trailerURL");
+                        if(!trailerURL.equals("NA")){
+                            playTrailer.setVisibility(View.VISIBLE);
+                        }
+
+                        // *********************************** WATCH OPTIONS PART ****************************************
+                        JSONObject watch = response.getJSONObject("watch");
+                        common.populateWatchOptionsSuccess(watch, watchOptionList);
+                        watchOptionsRecyclerView.setLayoutManager(new LinearLayoutManager(movieDetails.this, LinearLayoutManager.HORIZONTAL, false));
+                        watchOptionAdapter watchAdapter = new watchOptionAdapter(watchOptionList);
+                        watchOptionsRecyclerView.setAdapter(watchAdapter);
+
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 }, error -> {
-                    // Handle error
-                    error.printStackTrace();
-                });
+            // Handle error
+            error.printStackTrace();
+        });
 
         queue.add(jsonObjectRequest);
-
     }
+
 }

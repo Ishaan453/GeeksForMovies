@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import com.ishaanbhela.geeksformovies.Preferences.preferenceModel;
 import com.ishaanbhela.geeksformovies.cast.castModel;
 import com.ishaanbhela.geeksformovies.productionCompany.productionCompanyModel;
 
@@ -57,15 +58,21 @@ public class SqLiteHelper extends SQLiteOpenHelper {
                 "FOREIGN KEY(movie_id) REFERENCES movies(id) ON DELETE CASCADE)";
         db.execSQL(CREATE_CAST_TABLE);
 
+        String CREATE_USER_PREFERENCES_TABLE = "CREATE TABLE IF NOT EXISTS user_preferences (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "preferred_language TEXT, " +
+                "preferred_genres TEXT, " +
+                "preferred_region TEXT, " +
+                "preferred_vote_avg TEXT, " +
+                "preferred_watch_options TEXT," +
+                "preferred_runtime INTEGER)";
+        db.execSQL(CREATE_USER_PREFERENCES_TABLE);
+
 
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS movies");
-        db.execSQL("DROP TABLE IF EXISTS production_companies");
-        db.execSQL("DROP TABLE IF EXISTS castInfo");
-        onCreate(db);
     }
 
     // Check if the movie exists in the DB
@@ -74,6 +81,7 @@ public class SqLiteHelper extends SQLiteOpenHelper {
         Cursor cursor = db.query("movies", new String[]{"id"}, "id=?", new String[]{String.valueOf(movieId)}, null, null, null);
         boolean exists = cursor.getCount() > 0;
         cursor.close();
+        db.close();
         return exists;
     }
 
@@ -164,6 +172,7 @@ public class SqLiteHelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         cursor.close();
+        db.close();
         return companies;
     }
 
@@ -189,6 +198,69 @@ public class SqLiteHelper extends SQLiteOpenHelper {
             } while (cursor.moveToNext());
         }
         cursor.close();
+        db.close();
         return castList;
+    }
+
+    public void saveUserPreferences(preferenceModel preference) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put("preferred_language", preference.getPreferredLanguage());
+        values.put("preferred_genres", preference.getPreferredGenres());
+        values.put("preferred_region", preference.getPreferredRegion());
+        values.put("preferred_vote_avg", preference.getPreferredVoteAvg());
+        values.put("preferred_watch_options", preference.getPreferredWatchOptions());
+        values.put("preferred_runtime", preference.getPreferredRuntime());
+
+        // Insert the new preferences (since we're using AUTOINCREMENT, no need to worry about the id)
+        db.insert("user_preferences", null, values);
+
+        db.close();
+    }
+
+    public preferenceModel getUserPreferences() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query("user_preferences", null, null, null, null, null, null);
+
+        preferenceModel userPreferences = null;
+
+        // Check if there is at least one row in the cursor
+        if (cursor != null && cursor.moveToFirst()) {
+            // Make sure column exists before accessing it
+            int languageIndex = cursor.getColumnIndex("preferred_language");
+            int regionIndex = cursor.getColumnIndex("preferred_region");
+            int genresIndex = cursor.getColumnIndex("preferred_genres");
+            int voteAvgIndex = cursor.getColumnIndex("preferred_vote_avg");
+            int watchOptionsIndex = cursor.getColumnIndex("preferred_watch_options");
+            int runtimeIndex = cursor.getColumnIndex("preferred_runtime");
+
+            if (languageIndex != -1 && regionIndex != -1 && genresIndex != -1 &&
+                    voteAvgIndex != -1 && watchOptionsIndex != -1 && runtimeIndex != -1) {
+
+                // Now safely retrieve the values
+                String preferredLanguage = cursor.getString(languageIndex);
+                String preferredRegion = cursor.getString(regionIndex);
+                String preferredGenres = cursor.getString(genresIndex);
+                String preferredVoteAvg = cursor.getString(voteAvgIndex);
+                String preferredWatchOptions = cursor.getString(watchOptionsIndex);
+                int preferredRuntime = cursor.getInt(runtimeIndex);
+
+                // Create the preferenceModel object
+                userPreferences = new preferenceModel(preferredLanguage, preferredGenres, preferredRegion,
+                        preferredVoteAvg, preferredWatchOptions, preferredRuntime);
+            } else {
+                // Handle the case where any of the columns are missing
+                System.out.println("Error: One or more columns do not exist in the database.");
+            }
+        }
+
+        // Always close the cursor to avoid memory leaks
+        if (cursor != null) {
+            cursor.close();
+        }
+        db.close();
+
+        return userPreferences;
     }
 }
