@@ -6,11 +6,11 @@ public class preferenceModel {
     private String preferredRegion;
     private String preferredVoteAvg;
     private String preferredWatchOptions;
-    private int preferredRuntime;
+    private String preferredRuntime;
 
     // Constructor
     public preferenceModel(String preferredLanguage, String preferredGenres, String preferredRegion,
-                           String preferredVoteAvg, String preferredWatchOptions, int preferredRuntime) {
+                           String preferredVoteAvg, String preferredWatchOptions, String preferredRuntime) {
         this.preferredLanguage = preferredLanguage;
         this.preferredGenres = preferredGenres;
         this.preferredRegion = preferredRegion;
@@ -60,11 +60,11 @@ public class preferenceModel {
         this.preferredWatchOptions = preferredWatchOptions;
     }
 
-    public int getPreferredRuntime() {
+    public String getPreferredRuntime() {
         return preferredRuntime;
     }
 
-    public void setPreferredRuntime(int preferredRuntime) {
+    public void setPreferredRuntime(String preferredRuntime) {
         this.preferredRuntime = preferredRuntime;
     }
 }

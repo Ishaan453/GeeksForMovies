@@ -16,7 +16,7 @@ import java.util.List;
 
 public class SqLiteHelper extends SQLiteOpenHelper {
     private static final String DATABASE_NAME = "movies_db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     public SqLiteHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -73,6 +73,17 @@ public class SqLiteHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if(newVersion == 2){
+            String CREATE_USER_PREFERENCES_TABLE = "CREATE TABLE IF NOT EXISTS user_preferences (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    "preferred_language TEXT, " +
+                    "preferred_genres TEXT, " +
+                    "preferred_region TEXT, " +
+                    "preferred_vote_avg TEXT, " +
+                    "preferred_watch_options TEXT," +
+                    "preferred_runtime INTEGER)";
+            db.execSQL(CREATE_USER_PREFERENCES_TABLE);
+        }
     }
 
     // Check if the movie exists in the DB
@@ -213,8 +224,26 @@ public class SqLiteHelper extends SQLiteOpenHelper {
         values.put("preferred_watch_options", preference.getPreferredWatchOptions());
         values.put("preferred_runtime", preference.getPreferredRuntime());
 
-        // Insert the new preferences (since we're using AUTOINCREMENT, no need to worry about the id)
-        db.insert("user_preferences", null, values);
+        Cursor cursor = db.rawQuery("SELECT id FROM user_preferences LIMIT 1", null);
+
+        if (cursor != null && cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            int ID = cursor.getColumnIndex("id");
+            int id = -1;
+            if(ID != -1){
+                id = cursor.getInt(ID);
+            }
+            System.out.println("Updating DB");
+            db.update(
+                    "user_preferences",
+                    values,
+                    "id = ?",
+                    new String[]{String.valueOf(id)}
+            );
+            cursor.close();
+        } else {
+            db.insert("user_preferences", null, values);
+        }
 
         db.close();
     }
@@ -244,7 +273,7 @@ public class SqLiteHelper extends SQLiteOpenHelper {
                 String preferredGenres = cursor.getString(genresIndex);
                 String preferredVoteAvg = cursor.getString(voteAvgIndex);
                 String preferredWatchOptions = cursor.getString(watchOptionsIndex);
-                int preferredRuntime = cursor.getInt(runtimeIndex);
+                String preferredRuntime = cursor.getString(runtimeIndex);
 
                 // Create the preferenceModel object
                 userPreferences = new preferenceModel(preferredLanguage, preferredGenres, preferredRegion,
@@ -253,6 +282,9 @@ public class SqLiteHelper extends SQLiteOpenHelper {
                 // Handle the case where any of the columns are missing
                 System.out.println("Error: One or more columns do not exist in the database.");
             }
+        }
+        else{
+            return new preferenceModel("0000", "[]", "0000", "No Preference", "No Preference", "No Preference");
         }
 
         // Always close the cursor to avoid memory leaks

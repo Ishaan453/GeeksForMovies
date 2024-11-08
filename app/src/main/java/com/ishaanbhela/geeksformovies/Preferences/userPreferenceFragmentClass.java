@@ -5,7 +5,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.SeekBar;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -18,6 +22,7 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.ishaanbhela.geeksformovies.Database.SqLiteHelper;
 import com.ishaanbhela.geeksformovies.MyApp;
 import com.ishaanbhela.geeksformovies.R;
 
@@ -27,12 +32,19 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class userPreferenceFragmentClass extends Fragment {
 
     private Spinner languageSpinner, regionSpinner;
     private ChipGroup genreChipGroup;
+    private Button addPreference;
+    private SeekBar ratingSeekBar, runtimeSeekBar;
+    private TextView ratingText, runtimeText;
+    private CheckBox noPreferenceRating, noPreferenceRuntime;
+
+    public Boolean preferenceChanged = false;
+
+
     List<languageModel> languages;
     List<regionModel> regions;
     List<genresModel> genres;
@@ -54,6 +66,13 @@ public class userPreferenceFragmentClass extends Fragment {
         languageSpinner = view.findViewById(R.id.languageSpinner);
         regionSpinner = view.findViewById(R.id.regionSpinner);
         genreChipGroup = view.findViewById(R.id.genresChipGroup);
+        addPreference = view.findViewById(R.id.savePreferenceButton);
+        ratingSeekBar = view.findViewById(R.id.ratingSeekBar);
+        runtimeSeekBar = view.findViewById(R.id.runtimeSeekBar);
+        ratingText = view.findViewById(R.id.ratingValue);
+        runtimeText = view.findViewById(R.id.runtimeValue);
+        noPreferenceRuntime = view.findViewById(R.id.noPreferenceRuntime);
+        noPreferenceRating = view.findViewById(R.id.noPreferenceRating);
 
         languages = new ArrayList<>();
         regions = new ArrayList<>();
@@ -64,6 +83,163 @@ public class userPreferenceFragmentClass extends Fragment {
         } catch (Exception e) {
             Toast.makeText(requireContext(), "ERROR", Toast.LENGTH_SHORT).show();
         }
+
+        addPreference.setOnClickListener(v -> {
+            savePreference();
+            Toast.makeText(requireContext(), "Preference Saved Successfully", Toast.LENGTH_SHORT).show();
+            System.out.println(preferenceChanged);
+        });
+
+
+
+        noPreferenceRating.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                ratingSeekBar.setProgress(0);
+                ratingSeekBar.setEnabled(false);
+                ratingText.setText("No Preference");
+            } else {
+                ratingText.setText(String.valueOf(ratingSeekBar.getProgress()));
+                ratingSeekBar.setEnabled(true);
+            }
+        });
+
+        // Handle No Preference for Runtime
+        noPreferenceRuntime.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                runtimeSeekBar.setProgress(0);
+                runtimeSeekBar.setEnabled(false);
+                runtimeText.setText("No Preference");
+            } else {
+                runtimeText.setText(String.valueOf(runtimeSeekBar.getProgress()));
+                runtimeSeekBar.setEnabled(true);
+            }
+        });
+
+        ratingSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                ratingText.setText(String.valueOf(progress/2.0f));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        runtimeSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                runtimeText.setText(String.valueOf(progress/2.0f));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+    }
+
+    private void autoSelectSavedPreference(preferenceModel savedPreference) {
+        for (int i = 0; i < languageSpinner.getCount(); i++) {
+            languageModel language = (languageModel) languageSpinner.getItemAtPosition(i);
+            if (language.getIso_639_1().equals(savedPreference.getPreferredLanguage())) {
+                languageSpinner.setSelection(i);
+                break;
+            }
+        }
+
+        for (int i = 0; i < regionSpinner.getCount(); i++) {
+            regionModel region = (regionModel) regionSpinner.getItemAtPosition(i);
+            if (region.getIso_3166_1().equals(savedPreference.getPreferredRegion())) {
+                regionSpinner.setSelection(i);
+                break;
+            }
+        }
+
+        try {
+            JSONArray savedGenresArray = new JSONArray(savedPreference.getPreferredGenres());
+            for (int i = 0; i < genreChipGroup.getChildCount(); i++) {
+                Chip chip = (Chip) genreChipGroup.getChildAt(i);
+                genresModel genre = (genresModel) chip.getTag();
+                for (int j = 0; j < savedGenresArray.length(); j++) {
+                    JSONObject savedGenre = savedGenresArray.getJSONObject(j);
+                    int savedGenreId = savedGenre.getInt("id");
+                    if (savedGenreId == genre.getId()) {
+                        chip.setChecked(true);
+                        break;
+                    }
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+            // Handle any errors while parsing the saved genres
+        }
+
+        if (!savedPreference.getPreferredVoteAvg().equals("No Preference")) {
+            ratingSeekBar.setProgress(Integer.parseInt(savedPreference.getPreferredVoteAvg()));
+            ratingText.setText(savedPreference.getPreferredVoteAvg());
+        } else {
+            noPreferenceRating.setChecked(true);
+        }
+
+        // Auto-select the runtime preference
+        if (!savedPreference.getPreferredRuntime().equals("No Preference")) {
+            runtimeSeekBar.setProgress(Integer.parseInt(savedPreference.getPreferredRuntime()));
+            runtimeText.setText(savedPreference.getPreferredRuntime());
+        } else {
+            noPreferenceRuntime.setChecked(true);
+        }
+    }
+
+    private void savePreference() {
+        languageModel selectedLanguage = (languageModel) languageSpinner.getSelectedItem();
+        regionModel selectedRegion = (regionModel) regionSpinner.getSelectedItem();
+        List<genresModel> selectedGenres = new ArrayList<>();
+
+        for (int i = 0; i < genreChipGroup.getChildCount(); i++) {
+            Chip chip = (Chip) genreChipGroup.getChildAt(i);
+            if (chip.isChecked()) {
+                System.out.println("CHIP ADDED");
+                genresModel selectedGenre = (genresModel) chip.getTag();
+                selectedGenres.add(selectedGenre);
+            }
+        }
+
+        JSONArray selectedGenresJsonArray = new JSONArray();
+        try{
+            for (genresModel genre : selectedGenres) {
+                JSONObject genreJson = new JSONObject();
+                genreJson.put("id", genre.getId());
+                genreJson.put("name", genre.getName());
+                selectedGenresJsonArray.put(genreJson);
+            }
+        }
+        catch (Exception e){
+            System.out.println("Some error occurred");
+            return;
+        }
+        String ratingPreference = "0";
+        if(!ratingSeekBar.isSelected()){
+            ratingPreference = ratingText.getText().toString();
+        }
+        String runtimePreference = "0";
+        if(!runtimeSeekBar.isSelected()){
+            runtimePreference = runtimeText.getText().toString();
+        }
+
+        preferenceModel preference = new preferenceModel(selectedLanguage.getIso_639_1(), selectedGenresJsonArray.toString(), selectedRegion.getIso_3166_1(), ratingPreference, "No Preference", runtimePreference);
+        try {
+            SqLiteHelper db = new SqLiteHelper(requireContext());
+            db.saveUserPreferences(preference);
+        }
+        catch (Exception e){
+
+        }
+
+
     }
 
 
@@ -90,18 +266,25 @@ public class userPreferenceFragmentClass extends Fragment {
                         populateGenresChipGroup(genresArray);
                         System.out.println("Data added");
 
+                        SqLiteHelper db = new SqLiteHelper(requireContext());
+                        preferenceModel savedPreference = db.getUserPreferences();
+                        if(savedPreference != null){
+                            autoSelectSavedPreference(savedPreference);
+                        }
+
                     } catch (Exception e) {
                         System.out.println("Some error is occurring when parsing preferences response");
                     }
                 },
                 error -> {
-                    // Handle error
+                    System.out.println(error.toString());
                 });
 
         queue.add(jsonObjectRequest);
     }
 
     private void populateLanguageSpinner(JSONArray languagesArray) throws IllegalStateException {
+        languages.add(new languageModel("0000", "No Preference", "No Preference"));
         for (int i = 0; i < languagesArray.length(); i++) {
             try {
                 JSONObject language = languagesArray.getJSONObject(i);
@@ -121,6 +304,7 @@ public class userPreferenceFragmentClass extends Fragment {
     }
 
     private void populateRegionSpinner(JSONArray regionsArray) throws IllegalStateException {
+        regions.add(new regionModel("0000", "No Preference", "No Preference"));
         for (int i = 0; i < regionsArray.length(); i++) {
             try {
                 JSONObject region = regionsArray.getJSONObject(i);
@@ -152,6 +336,8 @@ public class userPreferenceFragmentClass extends Fragment {
 
                 Chip chip = new Chip(requireContext());
                 chip.setText(g.toString());
+                chip.setTag(g);
+                chip.setBackgroundColor(getResources().getColor(R.color.lightLavender));
                 chip.setCheckable(true);
                 chip.setChecked(false);
                 genreChipGroup.addView(chip);
@@ -161,6 +347,4 @@ public class userPreferenceFragmentClass extends Fragment {
             }
         }
     }
-
-
 }

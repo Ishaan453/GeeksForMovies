@@ -12,7 +12,7 @@
     <color name="dark_accent">#FF4081</color>
     <color name="colorAccentDark">#BB86FC</color>
     <color name="buttonDarkBackground">#333333</color>
-    
+    <color name="lightLavender">#BFA5FF</color>
     <color name="accent_teal">#1DE9B6</color>
     <color name="accent_purple">#9C27B0</color>
     <color name="highlight_orange">#FF9800</color>

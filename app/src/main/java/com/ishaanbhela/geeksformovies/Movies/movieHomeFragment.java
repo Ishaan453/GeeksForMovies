@@ -31,6 +31,8 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.ishaanbhela.geeksformovies.Database.SqLiteHelper;
 import com.ishaanbhela.geeksformovies.MyApp;
+import com.ishaanbhela.geeksformovies.Preferences.preferenceModel;
+import com.ishaanbhela.geeksformovies.Preferences.userPreferenceFragmentClass;
 import com.ishaanbhela.geeksformovies.R;
 import com.ishaanbhela.geeksformovies.searchedMovies.searchedMoviesAdapter;
 import com.ishaanbhela.geeksformovies.searchedMovies.searchedMoviesModel;
@@ -44,20 +46,22 @@ import java.util.List;
 
 public class movieHomeFragment extends Fragment {
 
-    private RecyclerView recyclerViewTrending, recyclerViewPopular, recyclerViewTopRated, recyclerViewUpcoming, recyclerViewSaved;
+    private RecyclerView recyclerViewTrending, recyclerViewPopular, recyclerViewTopRated, recyclerViewUpcoming, recyclerViewSaved, recyclerViewPreference;
     private searchedMoviesAdapter movieAdapter;
     private List<searchedMoviesModel> trendingMovieList;
     private List<searchedMoviesModel> popularMovieList;
-    private List<searchedMoviesModel> topRatedMovieList, upcomingMovieList;
-    private TextView trending, popular, saved, topRated, upcoming;
+    private List<searchedMoviesModel> topRatedMovieList, upcomingMovieList, preferenceMovieList;
+    private TextView trending, popular, saved, topRated, upcoming, preference;
     private ImageView searchIcon;
     private EditText searchEditText;
     private searchMovieFragment fragment;
     private SwipeRefreshLayout refreshLayout;
-    ProgressBar progressBarTrending, progressBarPopular, progressBarTopRated, progressBarUpcoming, progressBarSaved;
+    private String previousPreferenceURL;
+    ProgressBar progressBarTrending, progressBarPopular, progressBarTopRated, progressBarUpcoming, progressBarSaved, progressBarPreference;
     LinearLayout content;
     String url = MyApp.url;
     int cardWidth;
+    String basePreferenceURL = "https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page=1&sort_by=popularity.desc&primary_release_date.gte=2012-01-01";
 
     @Nullable
     @Override
@@ -78,12 +82,22 @@ public class movieHomeFragment extends Fragment {
         trendingMovieList = new ArrayList<>();
         topRatedMovieList = new ArrayList<>();
         upcomingMovieList = new ArrayList<>();
+        preferenceMovieList = new ArrayList<>();
 
         cardWidth = (int) getResources().getDimension(R.dimen.searchImageSize);
 
         if(isAdded()){
             int index = 0;
-            trending = createTextView("Trending");
+
+            preference = createTextView("Your Preferences");
+            content.addView(preference, index++);
+            progressBarPreference = createProgressBar();
+            content.addView(progressBarPreference, index++);
+            progressBarPreference.setVisibility(View.VISIBLE);
+            recyclerViewPreference = createRecyclerView();
+            content.addView(recyclerViewPreference, index++);
+
+            trending = createTextView("Global Trending");
             content.addView(trending, index++);
             progressBarTrending = createProgressBar();
             content.addView(progressBarTrending, index++);
@@ -91,7 +105,7 @@ public class movieHomeFragment extends Fragment {
             recyclerViewTrending = createRecyclerView();
             content.addView(recyclerViewTrending, index++);
 
-            popular = createTextView("Popular");
+            popular = createTextView("Global Popular");
             content.addView(popular, index++);
             progressBarPopular = createProgressBar();
             content.addView(progressBarPopular, index++);
@@ -99,7 +113,7 @@ public class movieHomeFragment extends Fragment {
             recyclerViewPopular = createRecyclerView();
             content.addView(recyclerViewPopular, index++);
 
-            topRated = createTextView("Top Rated");
+            topRated = createTextView("Global Top Rated");
             content.addView(topRated, index++);
             progressBarTopRated = createProgressBar();
             content.addView(progressBarTopRated, index++);
@@ -107,7 +121,7 @@ public class movieHomeFragment extends Fragment {
             recyclerViewTopRated = createRecyclerView();
             content.addView(recyclerViewTopRated, index++);
 
-            upcoming = createTextView("Upcoming");
+            upcoming = createTextView("Global Upcoming");
             content.addView(upcoming, index++);
             progressBarUpcoming = createProgressBar();
             content.addView(progressBarUpcoming, index++);
@@ -184,8 +198,14 @@ public class movieHomeFragment extends Fragment {
             return;
         }
 
+        String preferenceURL = getPreferenceURL();
+        previousPreferenceURL = preferenceURL;
+        System.out.println(preferenceURL);
+
+
         JSONObject jsonRequest = new JSONObject();
         jsonRequest.put("type", "home_page");
+        jsonRequest.put("preferenceURL", preferenceURL);
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
                 Request.Method.POST,
@@ -193,6 +213,22 @@ public class movieHomeFragment extends Fragment {
                 jsonRequest,
                 response -> {
                     try {
+                        if(!preferenceURL.equals(basePreferenceURL)){
+                            JSONObject preferenceObj = response.getJSONObject("preference");
+                            JSONArray preferenceArr = preferenceObj.getJSONArray("results");
+                            addMovie(preferenceArr, preferenceMovieList);
+                            if(isAdded()){
+                                movieAdapter = new searchedMoviesAdapter(preferenceMovieList, requireContext(), cardWidth);
+                                recyclerViewPreference.setAdapter(movieAdapter);
+                                progressBarPreference.setVisibility(View.GONE);
+                            }
+                        }
+                        else{
+                            this.preference.setVisibility(View.GONE);
+                            this.progressBarPreference.setVisibility(View.GONE);
+                            this.recyclerViewPreference.setVisibility(View.GONE);
+                        }
+
                         JSONObject trendingObj = response.getJSONObject("trending");
                         JSONArray trendingArr = trendingObj.getJSONArray("results");
                         addMovie(trendingArr, trendingMovieList);
@@ -391,9 +427,129 @@ public class movieHomeFragment extends Fragment {
         }
     }
 
+    public String getPreferenceURL() throws JSONException {
+        SqLiteHelper db = new SqLiteHelper(requireContext());
+        preferenceModel preference = db.getUserPreferences();
+        StringBuilder genreIdsBuilder = new StringBuilder();
+        JSONArray genreArray = new JSONArray(preference.getPreferredGenres());
+
+        if (genreArray.length() > 0) {
+            for (int i = 0; i < genreArray.length(); i++) {
+                JSONObject genreObject = genreArray.getJSONObject(i);
+                String genreId = genreObject.getString("id");
+
+                if (genreIdsBuilder.length() > 0) {
+                    genreIdsBuilder.append("|");
+                }
+                genreIdsBuilder.append(genreId);
+            }
+        }
+
+        String preferredLanguage = preference.getPreferredLanguage();
+        String preferredRegion = preference.getPreferredRegion();
+        String preferredRatingGTE = preference.getPreferredVoteAvg();
+        String preferredRuntimeLTE = preference.getPreferredRuntime();
+        // String preferredWatchOption = preference.getPreferredWatchOptions();
+
+        StringBuilder preferenceURL = new StringBuilder(basePreferenceURL);
+        if(!preferredLanguage.equals("0000")){
+            preferenceURL.append("&with_original_language=").append(preferredLanguage);
+        }
+        if(!preferredRegion.equals("0000")){
+            preferenceURL.append("&watch_region=").append(preferredRegion);
+        }
+        if(!preferredRatingGTE.equals("No Preference")){
+            preferenceURL.append("&vote_average.gte=").append(preferredRatingGTE);
+        }
+        if(!preferredRuntimeLTE.equals("No Preference")){
+            preferenceURL.append("&with_runtime.lte=").append(preferredRuntimeLTE);
+        }
+        if(!genreIdsBuilder.toString().isEmpty()){
+            preferenceURL.append("&with_genres=").append(genreIdsBuilder);
+        }
+
+        return preferenceURL.toString();
+    }
+
     @Override
     public void onResume() {
         super.onResume();
         loadSaved();
+    }
+
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+
+        if(!hidden){
+            System.out.println("ON RESUME CALLED");
+
+                JSONObject jsonRequest = new JSONObject();
+
+                String preferenceURL = null;
+                try {
+                    preferenceURL = getPreferenceURL();
+                    if(preferenceURL.equals(previousPreferenceURL)){
+                        return;
+                    }
+                    previousPreferenceURL = preferenceURL;
+                    System.out.println(preferenceURL);
+                } catch (JSONException e) {
+                    throw new RuntimeException(e);
+                }
+
+                try {
+                    jsonRequest.put("type", "preference");
+                    jsonRequest.put("preferenceURL", preferenceURL);
+                } catch (JSONException e) {
+                    throw new RuntimeException(e);
+                }
+
+
+                String finalPreferenceURL = preferenceURL;
+                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                        Request.Method.POST,
+                        url,
+                        jsonRequest,
+                        response -> {
+                            try {
+
+                                System.out.println(response);
+                                if(!finalPreferenceURL.equals(basePreferenceURL)){
+                                    System.out.println("IN IFFF");
+                                    preferenceMovieList = new ArrayList<>();
+                                    this.preference.setVisibility(View.VISIBLE);
+                                    this.progressBarPreference.setVisibility(View.VISIBLE);
+                                    this.recyclerViewPreference.setVisibility(View.VISIBLE);
+                                    JSONArray preferenceArr = response.getJSONArray("results");
+                                    addMovie(preferenceArr, preferenceMovieList);
+                                    if(isAdded()){
+                                        movieAdapter = new searchedMoviesAdapter(preferenceMovieList, requireContext(), cardWidth);
+                                        recyclerViewPreference.setAdapter(movieAdapter);
+                                        progressBarPreference.setVisibility(View.GONE);
+                                    }
+                                }
+                                else{
+                                    this.preference.setVisibility(View.GONE);
+                                    this.progressBarPreference.setVisibility(View.GONE);
+                                    this.recyclerViewPreference.setVisibility(View.GONE);
+                                }
+
+                            } catch (JSONException e) {
+                                if(isAdded()){
+                                    Toast.makeText(requireContext(), "Some error occurred while parsing response", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        },
+                        error -> {
+                            if (isAdded()){
+                                Toast.makeText(requireContext(), "Unable to load Upcoming Movies. Try again", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                );
+                if(isAdded()){
+                    Volley.newRequestQueue(requireContext()).add(jsonObjectRequest);
+                }
+        }
     }
 }
