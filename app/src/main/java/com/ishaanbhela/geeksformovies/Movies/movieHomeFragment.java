@@ -51,7 +51,7 @@ public class movieHomeFragment extends Fragment {
     private List<searchedMoviesModel> trendingMovieList;
     private List<searchedMoviesModel> popularMovieList;
     private List<searchedMoviesModel> topRatedMovieList, upcomingMovieList, preferenceMovieList;
-    private TextView trending, popular, saved, topRated, upcoming, preference;
+    private TextView trending, popular, saved, topRated, upcoming, preference, NoFound;
     private ImageView searchIcon;
     private EditText searchEditText;
     private searchMovieFragment fragment;
@@ -91,6 +91,9 @@ public class movieHomeFragment extends Fragment {
 
             preference = createTextView("Your Preferences");
             content.addView(preference, index++);
+            NoFound = createTextView("\t\t\t\t\t\tNo Movies Found");
+            NoFound.setVisibility(View.GONE);
+            content.addView(NoFound, index++);
             progressBarPreference = createProgressBar();
             content.addView(progressBarPreference, index++);
             progressBarPreference.setVisibility(View.VISIBLE);
@@ -221,6 +224,10 @@ public class movieHomeFragment extends Fragment {
                                 movieAdapter = new searchedMoviesAdapter(preferenceMovieList, requireContext(), cardWidth);
                                 recyclerViewPreference.setAdapter(movieAdapter);
                                 progressBarPreference.setVisibility(View.GONE);
+
+                                if(preferenceMovieList.isEmpty()){
+                                    NoFound.setVisibility(View.VISIBLE);
+                                }
                             }
                         }
                         else{
@@ -527,6 +534,13 @@ public class movieHomeFragment extends Fragment {
                                         movieAdapter = new searchedMoviesAdapter(preferenceMovieList, requireContext(), cardWidth);
                                         recyclerViewPreference.setAdapter(movieAdapter);
                                         progressBarPreference.setVisibility(View.GONE);
+                                    }
+
+                                    if(!preferenceMovieList.isEmpty()){
+                                        NoFound.setVisibility(View.GONE);
+                                    }
+                                    else {
+                                        NoFound.setVisibility(View.VISIBLE);
                                     }
                                 }
                                 else{

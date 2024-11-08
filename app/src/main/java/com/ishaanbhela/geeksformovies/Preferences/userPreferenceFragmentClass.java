@@ -179,7 +179,7 @@ public class userPreferenceFragmentClass extends Fragment {
         }
 
         if (!savedPreference.getPreferredVoteAvg().equals("No Preference")) {
-            ratingSeekBar.setProgress(Integer.parseInt(savedPreference.getPreferredVoteAvg()));
+            ratingSeekBar.setProgress((int) (Float.parseFloat(savedPreference.getPreferredVoteAvg())*2));
             ratingText.setText(savedPreference.getPreferredVoteAvg());
         } else {
             noPreferenceRating.setChecked(true);
