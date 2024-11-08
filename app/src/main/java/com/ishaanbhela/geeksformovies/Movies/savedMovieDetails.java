@@ -39,6 +39,7 @@ import java.util.List;
 public class savedMovieDetails extends AppCompatActivity {
 
     private TextView movieTitle, movieTagline, movieGenres, movieReleaseDate, movieRuntime, movieRating, movieOverview, movieBudget, movieRevenue, movieLanguages;
+    public TextView addRegionInfoText;
     private ImageView moviePoster;
     private RecyclerView productionCompaniesRecyclerView, castRecyclerView, watchOptionsRecyclerView;
     private List<productionCompanyModel> productionCompanyList;
@@ -74,6 +75,7 @@ public class savedMovieDetails extends AppCompatActivity {
         watchOptionsRecyclerView = findViewById(R.id.watch_recycler);
         collapsingToolbarLayout = findViewById(R.id.collapsingToolbar);
         playTrailer = findViewById(R.id.play_trailer_button);
+        addRegionInfoText = findViewById(R.id.addRegionInfoText);
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
@@ -97,11 +99,15 @@ public class savedMovieDetails extends AppCompatActivity {
         try {
             common.fetchWatchOptions(this, movieId, new movieDetailsCommon.watchOptionsCallback() {
                 @Override
-                public void onSuccess(JSONObject response) throws JSONException {
+                public void onSuccess(JSONObject response, String region) throws JSONException {
                     common.populateWatchOptionsSuccess(response, watchOptionList);
                     watchOptionsRecyclerView.setLayoutManager(new LinearLayoutManager(savedMovieDetails.this, LinearLayoutManager.HORIZONTAL, false));
                     watchOptionAdapter watchAdapter = new watchOptionAdapter(watchOptionList);
                     watchOptionsRecyclerView.setAdapter(watchAdapter);
+
+                    if(region.equals("0000")){
+                        addRegionInfoText.setVisibility(View.VISIBLE);
+                    }
                 }
 
                 @Override

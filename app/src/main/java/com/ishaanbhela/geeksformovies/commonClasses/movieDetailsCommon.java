@@ -8,7 +8,9 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.ishaanbhela.geeksformovies.Database.SqLiteHelper;
 import com.ishaanbhela.geeksformovies.MyApp;
+import com.ishaanbhela.geeksformovies.Preferences.preferenceModel;
 import com.ishaanbhela.geeksformovies.watchOptions.watchOptionsModel;
 
 import org.json.JSONArray;
@@ -50,20 +52,25 @@ public class movieDetailsCommon {
     }
 
     public interface watchOptionsCallback{
-        void onSuccess(JSONObject response) throws JSONException;
+        void onSuccess(JSONObject response, String region) throws JSONException;
         void onError(String error);
     }
 
     public void fetchWatchOptions(Context context, int movieId, watchOptionsCallback callback) throws JSONException {
         RequestQueue queue = Volley.newRequestQueue(context);
 
+        SqLiteHelper db = new SqLiteHelper(context);
+        preferenceModel preference = db.getUserPreferences();
+        String region = preference.getPreferredRegion();
+
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("type", "watchOptions");
         jsonObject.put("movieId", ""+movieId);
+        jsonObject.put("region", region);
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url, jsonObject, response -> {
             try{
-                callback.onSuccess(response);
+                callback.onSuccess(response, region);
 
             } catch (Exception e){
                 Toast.makeText(context, "Error occured movieDetailsCommon.72", Toast.LENGTH_SHORT).show();

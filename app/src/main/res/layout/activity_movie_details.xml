@@ -201,7 +201,7 @@
                 android:id="@+id/watch_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Watch Options in India"
+                android:text="Watch Options"
                 android:textStyle="bold"
                 android:textSize="@dimen/TextSize"
                 android:layout_marginBottom="5dp"
@@ -215,6 +215,15 @@
                 android:textSize="@dimen/smallerText"
                 android:layout_marginBottom="5dp"
                 android:textColor="@android:color/white" />
+
+            <TextView
+                android:id="@+id/addRegionInfoText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Note: Please provide region preference to enjoy this feature."
+                android:textSize="@dimen/smallerText"
+                android:layout_marginBottom="5dp"
+                android:visibility="gone"/>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/watch_recycler"

@@ -27,6 +27,7 @@ import com.bumptech.glide.Glide;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.ishaanbhela.geeksformovies.Database.SqLiteHelper;
 import com.ishaanbhela.geeksformovies.MyApp;
+import com.ishaanbhela.geeksformovies.Preferences.preferenceModel;
 import com.ishaanbhela.geeksformovies.R;
 import com.ishaanbhela.geeksformovies.cast.castAdapter;
 import com.ishaanbhela.geeksformovies.cast.castModel;
@@ -47,6 +48,7 @@ import java.util.List;
 public class movieDetails extends AppCompatActivity {
 
     private TextView movieTitle, movieTagline, movieGenres, movieReleaseDate, movieRuntime, movieRating, movieOverview, movieBudget, movieRevenue, movieLanguages;
+    public TextView addRegionInfoText;
     private ImageView moviePoster;
     private Button playTrailer;
     protected RecyclerView productionCompaniesRecyclerView, castsRecyclerView;
@@ -95,6 +97,7 @@ public class movieDetails extends AppCompatActivity {
         castsRecyclerView = findViewById(R.id.cast_recycler);
         watchOptionsRecyclerView = findViewById(R.id.watch_recycler);
         collapsingToolbarLayout = findViewById(R.id.collapsingToolbar);
+        addRegionInfoText = findViewById(R.id.addRegionInfoText);
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
@@ -148,9 +151,14 @@ public class movieDetails extends AppCompatActivity {
         NumberFormat format = NumberFormat.getInstance();
         format.setMaximumFractionDigits(2);
 
+        SqLiteHelper db = new SqLiteHelper(this);
+        preferenceModel preference = db.getUserPreferences();
+        String regionID = preference.getPreferredRegion();
+
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("type", "allMovieDetails");
         jsonObject.put("movieId", ""+movieId);
+        jsonObject.put("region", regionID);
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url, jsonObject,
                 response -> {
@@ -280,6 +288,10 @@ public class movieDetails extends AppCompatActivity {
                         watchOptionsRecyclerView.setLayoutManager(new LinearLayoutManager(movieDetails.this, LinearLayoutManager.HORIZONTAL, false));
                         watchOptionAdapter watchAdapter = new watchOptionAdapter(watchOptionList);
                         watchOptionsRecyclerView.setAdapter(watchAdapter);
+
+                        if(regionID.equals("0000")){
+                            addRegionInfoText.setVisibility(View.VISIBLE);
+                        }
 
                     } catch (JSONException e) {
                         e.printStackTrace();
