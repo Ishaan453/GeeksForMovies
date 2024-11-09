@@ -15,6 +15,8 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.google.android.material.navigation.NavigationView;
 import com.ishaanbhela.geeksformovies.Movies.movieHomeFragment;
 import com.ishaanbhela.geeksformovies.Preferences.userPreferenceFragmentClass;
@@ -27,6 +29,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private about aboutFragment;
     private userPreferenceFragmentClass preferenceFragment;
     private TextView menuHead;
+    AdView adView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +66,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     .hide(preferenceFragment)
                     .commit();
         }
+
+        adView = findViewById(R.id.MainActivityBannerAd);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        adView.loadAd(adRequest);
     }
 
     @Override

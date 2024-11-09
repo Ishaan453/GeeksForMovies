@@ -17,6 +17,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.ishaanbhela.geeksformovies.Database.SqLiteHelper;
 import com.ishaanbhela.geeksformovies.MyApp;
@@ -149,6 +151,11 @@ public class savedMovieDetails extends AppCompatActivity {
             new SqLiteHelper(this).deleteMovie(movieId);
             finish();
         });
+
+
+        AdView adView = findViewById(R.id.MovieDetailsBannerAd);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        adView.loadAd(adRequest);
     }
 
     private void loadMovieDetails(int movieId) {
