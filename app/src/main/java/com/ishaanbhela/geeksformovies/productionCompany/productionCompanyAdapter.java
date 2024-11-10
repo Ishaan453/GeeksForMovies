@@ -39,11 +39,17 @@ public class productionCompanyAdapter extends RecyclerView.Adapter<productionCom
         }
         else{
             String url = "https://image.tmdb.org/t/p/w500" + companies.get(position).logo_path;
-            Glide.with(context)
-                    .load(url)
-                    .placeholder(R.drawable.placeholder) // Placeholder image while loading
-                    .error(R.drawable.placeholder)
-                    .into(holder.logo);
+
+            try{
+                Glide.with(context)
+                        .load(url)
+                        .placeholder(R.drawable.placeholder) // Placeholder image while loading
+                        .error(R.drawable.placeholder)
+                        .into(holder.logo);
+            }
+            catch (Exception e){
+                System.out.println(e);
+            }
 
             holder.name = companies.get(position).name;
         }

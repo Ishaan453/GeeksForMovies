@@ -31,6 +31,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class userPreferenceFragmentClass extends Fragment {
@@ -284,7 +286,6 @@ public class userPreferenceFragmentClass extends Fragment {
     }
 
     private void populateLanguageSpinner(JSONArray languagesArray) throws IllegalStateException {
-        languages.add(new languageModel("0000", "No Preference", "No Preference"));
         for (int i = 0; i < languagesArray.length(); i++) {
             try {
                 JSONObject language = languagesArray.getJSONObject(i);
@@ -298,13 +299,14 @@ public class userPreferenceFragmentClass extends Fragment {
             }
         }
 
+        languages.sort((lang1, lang2) -> lang1.getEnglish_name().compareToIgnoreCase(lang2.getEnglish_name()));
+        languages.add(0, new languageModel("0000", "No Preference", "No Preference"));
         ArrayAdapter<languageModel> languageAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, languages);
         languageAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         languageSpinner.setAdapter(languageAdapter);
     }
 
     private void populateRegionSpinner(JSONArray regionsArray) throws IllegalStateException {
-        regions.add(new regionModel("0000", "No Preference", "No Preference"));
         for (int i = 0; i < regionsArray.length(); i++) {
             try {
                 JSONObject region = regionsArray.getJSONObject(i);
@@ -319,6 +321,8 @@ public class userPreferenceFragmentClass extends Fragment {
             }
         }
 
+        regions.sort((reg1, reg2) -> reg1.getEnglish_name().compareToIgnoreCase(reg2.getEnglish_name()));
+        regions.add(0, new regionModel("0000", "No Preference", "No Preference"));
         ArrayAdapter<regionModel> regionAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, regions);
         regionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         regionSpinner.setAdapter(regionAdapter);

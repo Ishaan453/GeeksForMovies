@@ -59,12 +59,17 @@ public class searchedMoviesAdapter extends RecyclerView.Adapter<searchedMoviesAd
         holder.overview.setText(movie.getOverview());
 
         String posterUrl = "https://image.tmdb.org/t/p/w500" + movie.getPosterPath(); // TMDb URL for posters
-        Glide.with(context)
-                .load(posterUrl)
-                .placeholder(R.drawable.placeholder) // Placeholder image while loading
-                .error(R.drawable.placeholder)
-                .into(holder.poster);
 
+        try{
+            Glide.with(context)
+                    .load(posterUrl)
+                    .placeholder(R.drawable.placeholder) // Placeholder image while loading
+                    .error(R.drawable.placeholder)
+                    .into(holder.poster);
+        }
+        catch (Exception e){
+            System.out.println(e);
+        }
 
         holder.itemView.setOnClickListener(v -> {
             dbHelper = new SqLiteHelper(context);

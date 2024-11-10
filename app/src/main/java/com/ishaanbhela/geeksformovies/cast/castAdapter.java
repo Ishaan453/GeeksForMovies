@@ -36,11 +36,17 @@ public class castAdapter extends RecyclerView.Adapter<castAdapter.castHolder> {
     public void onBindViewHolder(@NonNull castHolder holder, int position) {
         castModel cast = casts.get(position);
         String url = "https://image.tmdb.org/t/p/w500";
-        Glide.with(context)
-                .load(url + cast.getImgPath())
-                .placeholder(R.drawable.placeholder)
-                .error(R.drawable.placeholder)
-                .into(holder.castImg);
+
+        try{
+            Glide.with(context)
+                    .load(url + cast.getImgPath())
+                    .placeholder(R.drawable.placeholder)
+                    .error(R.drawable.placeholder)
+                    .into(holder.castImg);
+        }
+        catch (Exception e){
+            System.out.println(e);
+        }
 
         holder.castName.setText(cast.getName());
         holder.castCharacter.setText(cast.getCharacter());

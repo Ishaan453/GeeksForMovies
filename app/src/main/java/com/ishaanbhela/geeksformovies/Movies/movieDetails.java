@@ -68,6 +68,7 @@ public class movieDetails extends AppCompatActivity {
     private long budget, revenue;
     private Double rating;
     movieDetailsCommon common;
+    RequestQueue queue;
 
     String url = MyApp.url;
 
@@ -152,7 +153,7 @@ public class movieDetails extends AppCompatActivity {
     }
 
     private void getAllMovieDetails(int movieId) throws JSONException {
-        RequestQueue queue = Volley.newRequestQueue(this);
+        queue = Volley.newRequestQueue(this);
 
         NumberFormat format = NumberFormat.getInstance();
         format.setMaximumFractionDigits(2);
@@ -306,8 +307,14 @@ public class movieDetails extends AppCompatActivity {
             // Handle error
             error.printStackTrace();
         });
-
+        jsonObjectRequest.setTag("FETCH_MOVIE_DETAILS");
         queue.add(jsonObjectRequest);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        queue.cancelAll("FETCH_MOVIE_DETAILS");
     }
 
 }
