@@ -11,6 +11,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -98,7 +99,7 @@ public class searchedMoviesAdapter extends RecyclerView.Adapter<searchedMoviesAd
     public class searchedMoviesHolder extends RecyclerView.ViewHolder {
         ImageView poster;
         TextView title, overview, rating, release;
-        LinearLayout card;
+        CardView card;
         public searchedMoviesHolder(@NonNull View itemView) {
             super(itemView);
             poster = itemView.findViewById(R.id.movie_poster);
